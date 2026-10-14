@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get-Attendend</title>
+<link rel="icon" type="image/png" href="Logo/LOGO.png">
+<link rel="apple-touch-icon" href="Logo/LOGO.png">
+<!-- ============================================================
+  PROJECT: Get-Attendend - Employee Attendance System
+  STACK: Single-file HTML + CSS + JS + localStorage
+  ------------------------------------------------------------
+  HOW TO ADD NEXT FEATURE (for future dev):
+  STEP 1: Add HTML section below (search STEP tags in this file)
+  STEP 2: Add CSS class in STYLE block (see CSS STEP comments)
+  STEP 3: Add JS function in SCRIPT block (see JS STEP comments)
+  STEP 4: Wire onclick="" to new JS function + test in browser
+  NOTE: Storage keys are K_EMP / K_REC / K_ADMIN - don't rename
+============================================================= -->
+<style>
+/* ---------- CSS STEP 1: Base reset + fluid responsive layout (mobile -> 4K) ---------- */
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
+html{height:100%;width:100%;-webkit-text-size-adjust:100%}
+body{background:#f0f4f8 url('Background/Background-Image.png') no-repeat center center fixed;background-size:cover;color:#1a202c;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden}
+img{max-width:100%;height:auto}
+header{background:linear-gradient(135deg,#1a56db,#0d2f7a);color:#fff;padding:clamp(10px,2vw,16px) clamp(12px,3vw,22px);display:flex;align-items:center;gap:clamp(8px,2vw,14px);flex-wrap:wrap;box-shadow:0 2px 10px rgba(0,0,0,.2);position:sticky;top:0;z-index:100;width:100%}
+header img{width:clamp(28px,6vw,42px);height:clamp(28px,6vw,42px);border-radius:50%;background:#fff;object-fit:cover;border:3px solid #fff;flex-shrink:0}
+header h1{font-size:clamp(16px,4.5vw,24px);line-height:1.2;word-break:break-word}
+header p{font-size:clamp(11px,3vw,13px);opacity:.9;line-height:1.4}
+header>div:nth-child(2){flex:1 1 180px;min-width:0}
+header .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+header .right span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.container{width:100%;max-width:1100px;margin:clamp(10px,3vw,20px) auto;padding:0 clamp(10px,3vw,18px)}
+.card{background:#fff;border-radius:clamp(10px,2vw,14px);padding:clamp(14px,3.5vw,24px);box-shadow:0 4px 16px rgba(0,0,0,.08);margin-bottom:clamp(12px,3vw,20px);width:100%;overflow:hidden}
+.card h2{font-size:clamp(16px,4vw,22px);line-height:1.3}
+.card h3{font-size:clamp(14px,3.5vw,18px);line-height:1.3}
+.tabs{display:flex;gap:clamp(6px,2vw,10px);margin-bottom:clamp(12px,3vw,18px)}
+.tabs button{flex:1 1 0;padding:clamp(10px,2.5vw,13px) 8px;border:none;border-radius:10px;font-size:clamp(13px,3.5vw,16px);font-weight:700;cursor:pointer;background:#e2e8f0;color:#334155;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs button.active{background:#1a56db;color:#fff}
+.hidden{display:none!important}
+/* ---------- CSS STEP 2: Form controls (fluid label/input/select + buttons) ---------- */
+label{font-weight:600;font-size:clamp(13px,3vw,14px);display:block;margin:12px 0 5px;word-break:break-word}
+input,select{width:100%;max-width:100%;padding:clamp(10px,2.5vw,12px);border:2px solid #cbd5e1;border-radius:9px;font-size:16px;outline:none;min-width:0}
+input:focus,select:focus{border-color:#1a56db}
+.btn{width:100%;padding:clamp(11px,2.5vw,13px) 12px;border:none;border-radius:9px;font-size:clamp(14px,3.5vw,16px);font-weight:700;cursor:pointer;margin-top:14px;min-height:44px;word-break:break-word;white-space:normal;line-height:1.4;touch-action:manipulation}
+.btn-blue{background:#1a56db;color:#fff}.btn-blue:hover{background:#1544b0}
+.btn-green{background:#059669;color:#fff}.btn-green:hover{background:#047857}
+.btn-red{background:#dc2626;color:#fff}.btn-red:hover{background:#b91c1c}
+.btn-orange{background:#ea580c;color:#fff}
+.btn-grey{background:#64748b;color:#fff}
+.btn-small{width:auto;padding:8px 14px;font-size:clamp(12px,3vw,13px);margin:4px 4px 0 0;display:inline-block;min-height:36px;max-width:100%}
+/* ---------- CSS STEP 3: Employee dashboard widgets (fluid clock/grid/camera/loc + tables) ---------- */
+.live-clock{background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;text-align:center;border-radius:12px;padding:clamp(12px,3vw,18px);margin-bottom:clamp(12px,3vw,16px);width:100%}
+.live-clock .date{font-size:clamp(13px,3.5vw,17px)}
+.live-clock .time{font-size:clamp(26px,8vw,40px);font-weight:800;letter-spacing:clamp(1px,0.5vw,2px);line-height:1.1;word-break:break-word}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,3vw,16px)}
+video,#previewImg{width:100%;max-width:100%;height:auto;aspect-ratio:4/3;max-height:300px;border-radius:10px;background:#000;object-fit:cover;display:block}
+.loc-box{background:#f1f5f9;border-radius:10px;padding:clamp(10px,2.5vw,12px);font-size:clamp(12px,3vw,14px);margin-top:10px;word-break:break-word;overflow-wrap:anywhere;line-height:1.5;width:100%}
+.card div[style*="overflow-x"],div[style*="overflow-x:auto"]{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin-left:calc(-1 * clamp(14px,3.5vw,24px));margin-right:calc(-1 * clamp(14px,3.5vw,24px));padding-left:clamp(14px,3.5vw,24px);padding-right:clamp(14px,3.5vw,24px)}
+table{width:100%;min-width:640px;border-collapse:collapse;margin-top:12px;font-size:clamp(11px,2.8vw,13px)}
+th,td{border:1px solid #cbd5e1;padding:clamp(6px,1.5vw,8px);text-align:center;white-space:nowrap}
+th{background:#1a56db;color:#fff;font-size:clamp(11px,2.8vw,13px);position:sticky;top:0}
+tr:nth-child(even){background:#f8fafc}
+td img{width:clamp(40px,10vw,55px);height:clamp(40px,10vw,55px);border-radius:50%;object-fit:cover;border:2px solid #1a56db;cursor:pointer}
+/* ---------- CSS STEP 4: Tables + badges + filters + modals + helpers (responsive) ---------- */
+/* FUTURE: Add new popup/modal CSS here (follow the .modal-box pattern) */
+.badge{padding:4px 10px;border-radius:20px;font-size:clamp(11px,2.8vw,12px);font-weight:700;color:#fff;white-space:nowrap;display:inline-block}
+.present{background:#059669}.absent{background:#dc2626}.half{background:#ea580c}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px}
+.topbar h2{flex:1 1 200px;min-width:0;word-break:break-word}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;width:100%}
+.filters input,.filters select{flex:1 1 140px;min-width:140px;width:auto;max-width:100%}
+.filters .btn-small{flex:0 1 auto}
+a.maplink{color:#1a56db;font-size:clamp(11px,2.8vw,12px);word-break:break-all}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:999;padding:clamp(10px,3vw,15px);overflow-y:auto}
+.modal img{max-width:100%;max-height:85vh;border-radius:12px;border:4px solid #fff;object-fit:contain}
+.info{background:#eff6ff;border-left:5px solid #1a56db;padding:clamp(8px,2.5vw,12px) clamp(10px,3vw,14px);border-radius:8px;font-size:clamp(12px,3vw,14px);margin-bottom:14px;line-height:1.5;word-break:break-word}
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:clamp(8px,2.5vw,12px);margin-bottom:16px;width:100%}
+.stat{background:linear-gradient(135deg,#1a56db,#3b82f6);color:#fff;border-radius:12px;padding:clamp(10px,3vw,15px);text-align:center;min-width:0}
+.stat h2{font-size:clamp(20px,6vw,28px)}.stat p{font-size:clamp(11px,3vw,13px);line-height:1.3}
+.stat.g{background:linear-gradient(135deg,#059669,#34d399)}
+.stat.o{background:linear-gradient(135deg,#ea580c,#fb923c)}
+.stat.r{background:linear-gradient(135deg,#dc2626,#f87171)}
+.modal-box{background:#fff;border-radius:14px;padding:clamp(16px,4vw,26px);max-width:430px;width:calc(100% - 10px);text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:92vh;overflow-y:auto;margin:auto}
+.modal-box h3{font-size:clamp(16px,4.5vw,20px);margin-bottom:8px}
+.modal-box p{font-size:clamp(12px,3.2vw,14px);color:#475569;margin-bottom:18px;line-height:1.5}
+.modal-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.modal-btns .btn{width:auto;flex:1 1 120px;margin-top:0;min-width:110px}
+input[readonly]{background:#f1f5f9;color:#334155;cursor:not-allowed}
+.link-input{font-size:clamp(12px,3vw,13px)}
+.hint{font-size:clamp(11px,2.8vw,12px);color:#64748b;margin-top:4px;line-height:1.4;word-break:break-word}
+.forgot-link{display:inline-block;margin-top:10px;font-size:clamp(12px,3.2vw,14px);color:#1a56db;font-weight:600;cursor:pointer;text-decoration:underline;background:none;border:none;padding:0;max-width:100%}
+.forgot-link:hover{color:#0d2f7a}
+/* ---------- CSS STEP 5: Time-rule + holiday + stepped admin login (responsive) ---------- */
+/* FUTURE: Add new badge/step styles here */
+.adm-step{border:2px solid #e2e8f0;border-radius:10px;padding:clamp(10px,3vw,14px);margin-top:10px;background:#f8fafc;width:100%}
+.adm-step.done{border-color:#059669;background:#f0fdf4}
+.adm-step h4{font-size:clamp(13px,3.5vw,15px);margin-bottom:6px;line-height:1.4}
+.captcha-box{background:#1a56db;color:#fff;font-size:clamp(18px,5vw,22px);font-weight:800;text-align:center;border-radius:9px;padding:10px;letter-spacing:3px;margin:8px 0;word-break:break-word}
+.human-check{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid #cbd5e1;border-radius:9px;padding:10px;margin-top:8px;font-size:clamp(12px,3.2vw,14px);font-weight:600;flex-wrap:wrap;cursor:pointer}
+.human-check input{width:auto;transform:scale(1.4);flex-shrink:0;min-width:20px}
+.badge.blue{background:#1a56db}.badge.grey{background:#64748b}.badge.teal{background:#0f766e}
+.rule-box{background:#fffbeb;border-left:5px solid #ea580c;padding:clamp(8px,2.5vw,10px) clamp(10px,3vw,14px);border-radius:8px;font-size:clamp(12px,3vw,13px);margin-bottom:14px;line-height:1.5;word-break:break-word}
+.holiday-banner{background:#fef2f2;border:2px solid #dc2626;color:#991b1b;border-radius:10px;padding:clamp(10px,2.5vw,12px);font-weight:700;text-align:center;margin-bottom:14px;font-size:clamp(12px,3.2vw,14px);line-height:1.5;word-break:break-word}
+.holiday-banner.ok{background:#f0fdf4;border-color:#059669;color:#065f46}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+/* ---------- CSS STEP 6: Responsive breakpoints — small mobile to large desktop ---------- */
+/* 1) Small phones <=480px: stack everything, full-width filters, 2-col stats */
+@media(max-width:480px){
+  .tabs{flex-direction:column}
+  .tabs button{width:100%;white-space:normal}
+  .filters input,.filters select{flex:1 1 100%;min-width:0}
+  .filters .btn-small{flex:1 1 100%;width:100%;text-align:center}
+  .stat-cards{grid-template-columns:repeat(2,1fr)}
+  .modal-btns{flex-direction:column}
+  .modal-btns .btn{width:100%;flex:1 1 auto}
+  header .right{margin-left:0;width:100%;justify-content:flex-start}
+  header .right #hdrUser{flex:1 1 auto}
+  .btn-small{margin:4px 2px 0 0}
+  video,#previewImg{aspect-ratio:3/3.4;max-height:260px}
+  .topbar{flex-direction:column;align-items:stretch}
+}
+/* 2) Very small phones <=360px: single-col stats, tighter padding */
+@media(max-width:360px){
+  .stat-cards{grid-template-columns:1fr 1fr;gap:8px}
+  .stat{padding:10px 6px}
+  .card{border-radius:10px}
+  td img{width:38px;height:38px}
+}
+/* 3) Tablets <=768px: grid2 single column, larger tap targets */
+@media(max-width:768px){
+  .grid2{grid-template-columns:1fr}
+  body{background-attachment:scroll}
+  .container{padding:0 10px}
+}
+/* 4) Tablets landscape / small laptop 769-1024px: keep 2-col but tighter */
+@media(min-width:769px) and (max-width:1024px){
+  .container{max-width:960px}
+  .stat-cards{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+}
+/* 5) Desktop 1025-1399px: default 1100px container (already set) */
+@media(min-width:1025px){
+  .grid2{grid-template-columns:1fr 1fr}
+  video,#previewImg{max-height:320px}
+}
+/* 6) Large desktop >=1400px: expand container for wide screens */
+@media(min-width:1400px){
+  .container{max-width:1280px}
+  .card{padding:26px}
+  .live-clock .time{font-size:42px}
+}
+/* 7) Extra-large / 4K >=1800px: max readability, centered wide layout */
+@media(min-width:1800px){
+  .container{max-width:1500px}
+  body{font-size:17px}
+  table{font-size:14px}
+}
+/* 8) Landscape phones with low height: reduce clock + video height */
+@media(max-height:500px) and (orientation:landscape){
+  .live-clock{padding:8px}
+  .live-clock .time{font-size:24px}
+  video,#previewImg{max-height:200px;aspect-ratio:16/9}
+  header{position:static}
+}
+</style>
+</head>
+<body>
+
+<header>
+<img src="Logo/LOGO.png" alt="Logo" onerror="this.src='https://via.placeholder.com/52'">
+<div><h1>Get-Attendend</h1><p>Employee Attendance System • Photo + Location + Live Time</p></div>
+<div class="right"><span id="hdrUser"></span><span id="sesLeft" style="font-size:12px;opacity:.9"></span><button id="logoutBtn" class="btn-grey btn btn-small hidden" onclick="logout()">Logout</button></div>
+</header>
+
+<div class="container">
+
+<!-- ============ STEP 1: LOGIN SECTION ============ -->
+<!-- STEP 1A: Employee login (empId + empPass -> employeeLogin()) -->
+<!-- STEP 1B: Admin login 3-step (ID > Captcha+Human verify > Password direct) + Forgot link only on the password step -->
+<!-- FUTURE: For a new login type (e.g. Manager), add a new tab + div here -->
+<div id="loginSection" class="card">
+<div class="tabs">
+<button id="tabEmp" class="active" onclick="switchTab('emp')">👷 Employee Login</button>
+<button id="tabAdm" onclick="switchTab('adm')">🔐 Admin Login</button>
+</div>
+
+<div id="empLogin">
+<div class="info">Employees, log in with your <b>ID and Password</b> (get your ID from Admin).</div>
+<label>Employee ID</label><input id="empId" placeholder="e.g.: EMP001">
+<label>Password</label><input id="empPass" type="password" placeholder="Password">
+<button class="btn btn-green" onclick="employeeLogin()">✅ Login / Mark Attendance</button>
+<div style="text-align:center"><button class="forgot-link" onclick="openEmpForgotModal()">Forgot Password? Reset via Mobile 📱</button></div>
+</div>
+
+<div id="admLogin" class="hidden">
+<!-- STEP 1B-i: Step 1 Admin ID -->
+<div id="admStep1" class="adm-step">
+<h4>1️⃣ Step 1: Admin ID</h4>
+<label>Admin ID</label><input id="admId" placeholder="admin">
+<button class="btn btn-blue" onclick="admNextToHuman()">Next ➡ Human Verification</button>
+</div>
+<!-- STEP 1B-ii: Step 2 Human verification (captcha + checkbox) -->
+<div id="admStep2" class="adm-step hidden">
+<h4>2️⃣ Step 2: Human Verification 🤖➡🧍</h4>
+<p style="font-size:13px;color:#475569">ID <b id="admVerIdShow"></b> verified. Please prove you are human:</p>
+<div class="captcha-box" id="captchaQ">3 + 4 = ?</div>
+<label>Captcha Answer * (enter the sum shown above)</label><input id="captchaAns" type="number" placeholder="e.g.: 7">
+<label class="human-check"><input type="checkbox" id="humanChk"> ✅ I am human (not a robot)</label>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button class="btn btn-grey" style="flex:1 1 100px;min-width:100px" onclick="admBackToId()">⬅ Back</button>
+<button class="btn btn-blue" style="flex:2 1 160px;min-width:160px" onclick="admVerifyHuman()">Verify & Continue ➡</button>
+</div>
+<div style="text-align:center;margin-top:8px"><button class="forgot-link" style="font-size:12px" onclick="refreshCaptcha()">🔄 New Captcha</button></div>
+</div>
+<!-- STEP 1B-iv: Step 3 Password + Forgot (DIRECT after Verify & Continue, reset link ONLY here) -->
+<div id="admStep4" class="adm-step hidden">
+<h4>3️⃣ Step 3: Input Password</h4>
+<label>Password</label><input id="admPass" type="password" placeholder="Admin password">
+<button class="btn btn-blue" onclick="adminLogin()">🔓 Admin Login</button>
+<div style="text-align:center"><button class="forgot-link" onclick="openForgotModal()">Forgot Password? Reset via Security Questions 📱</button></div>
+<div style="text-align:center;margin-top:6px"><button class="forgot-link" style="font-size:12px;color:#64748b" onclick="admBackToId2()">⬅ Back</button></div>
+</div>
+</div>
+</div>
+
+<!-- ============ STEP 2: EMPLOYEE DASHBOARD ============ -->
+<!-- STEP 2A: Live clock (empDate/empTime - auto via setInterval) -->
+<!-- STEP 2B: Profile header (empName/empShowId/empDesg/empStore/empStoreLink) -->
+<!-- STEP 2C: Photo block (cam/previewImg/photoStatus/submitPhotoBtn -> startCam/capturePhoto/submitPhoto/retake) -->
+<!-- FLOW: Take Photo = preview only (pendingPhoto) → Submit Photo = confirm (photoData) → Punch -->
+<!-- STEP 2D: Location block (locBox -> getLocation) + Punch 4-status -> punch('IN'/'OUT'/'STORECLOSE'/'WEEKOFF') -->
+<!-- 1=IN (On Arrival), 2=OUT (On Departure), 3=Store Close (employee mark), 4=Sunday Week Off (auto) -->
+<!-- STEP 2E: My attendance table (myTable <- renderMyTable) -->
+<!-- FUTURE: For a new employee feature (e.g. Leave apply), add a new .card here -->
+<div id="empDash" class="hidden">
+<div class="live-clock"><div class="date" id="empDate">--</div><div class="time" id="empTime">--:--:--</div><div>Live Date & Time ⏰</div></div>
+
+<div class="card">
+<div class="topbar"><h2>🙏 Hello, <span id="empName"></span> (<span id="empShowId"></span>)</h2><button class="btn btn-grey btn-small" onclick="openEmpSettings()">⚙️ Settings</button></div>
+<p style="font-size:14px;color:#475569">Designation: <b id="empDesg"></b> | Store: <b id="empStore"></b> | Today's Status: <b id="todayStatus">—</b></p>
+<p id="empStoreLinkWrap" style="font-size:13px;margin-top:4px"><a id="empStoreLink" class="maplink" target="_blank" href="#">🏬 View Store Location</a></p>
+<div class="rule-box" style="margin-top:10px">⏰ <b>Time Rules:</b> IN: <b>10:00 AM – 1:00 PM</b> | OUT: <b>until 11:59:50 PM</b> | <b>OUT before 6 PM = Half Day 🟠</b> | Back-date ❌ (today only)<br>📍 <b>Location Rule:</b> IN/OUT/Store Close works only within <b>50 meters of the Store</b> — outside this range punch is BLOCKED + status <b>Absent</b> ❌</div>
+<div id="todayHolidayNotice" class="holiday-banner ok hidden"></div>
+
+<div class="grid2" style="margin-top:14px">
+<div>
+<h3>📸 Live Photo — Front Camera Only (Upload ❌ Not Allowed)</h3>
+<video id="cam" autoplay playsinline></video>
+<img id="previewImg" class="hidden" alt="Captured">
+<div id="photoStatus" class="hint">📷 Front camera only — Gallery/upload is not allowed ❌<br>Step 1: Start Camera → Step 2: Take Photo (preview) → Step 3: Submit ✅</div>
+<div style="margin-top:8px">
+<button class="btn btn-blue btn-small" onclick="startCam()">📷 Start Front Camera</button>
+<button class="btn btn-orange btn-small" onclick="capturePhoto()">📸 Take Photo (Preview)</button>
+<button id="submitPhotoBtn" class="btn btn-green btn-small hidden" onclick="submitPhoto()">✅ Submit Photo</button>
+<button class="btn btn-grey btn-small" onclick="retake()">🔄 Retake</button>
+</div>
+</div>
+<div>
+<h3>📍 Live Location (Required)</h3>
+<div class="loc-box" id="locBox">Location not captured yet.<br>Press the button below.</div>
+<button class="btn btn-blue btn-small" onclick="getLocation()">📍 Get Location</button>
+<p style="font-size:12px;color:#64748b;margin-top:6px">Note: Please allow Location permission in your browser.</p>
+<h3 style="margin-top:12px">🕐 Punch Status (4 option)</h3>
+<button id="btnIN" class="btn btn-green" onclick="punch('IN')">1️⃣ 🟢 Attendance IN (On Arrival)</button>
+<button id="btnOUT" class="btn btn-red" onclick="punch('OUT')">2️⃣ 🔴 Attendance OUT (On Departure)</button>
+<button id="btnSC" class="btn btn-blue" onclick="punch('STORECLOSE')">3️⃣ 🏬 Store Close</button>
+<button id="btnWO" class="btn btn-grey" onclick="punch('WEEKOFF')">4️⃣ 🌴 Week Off (Manual / Sunday Auto)</button>
+<div class="holiday-banner" style="margin-top:10px">⚠️ <b>If you don't OUT then status is Absent</b> — OUT after IN is compulsory!</div>
+<p class="hint">Sunday gets <b>automatic Week Off</b>. On any day you can mark a MANUAL Week Off with the <b>Week Off button</b> (not after IN).</p>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h3>📋 My Attendance — Month Wise (Date Wise Status)</h3>
+<div class="info">Your date-wise status for each month appears here. <b>The view auto-resets in a new month</b> (new month starts empty) — old data stays safe in the Admin table.</div>
+<div class="filters">
+<input type="month" id="myMonth" onchange="renderMyTable()">
+<button class="btn btn-grey btn-small" onclick="resetMyMonth()">📅 Current Month</button>
+</div>
+<div id="mySummary" class="loc-box">—</div>
+<div style="overflow-x:auto"><table id="myTable"><thead><tr><th>Date</th><th>Day</th><th>In Time</th><th>In Photo</th><th>In Location (Via Link)</th><th>Out Time</th><th>Out Photo</th><th>Out Location (Via Link)</th><th>Working Hours</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+</div>
+</div>
+
+<!-- ============ STEP 3: ADMIN DASHBOARD ============ -->
+<!-- STEP 3A: Stat cards (stEmp/stToday/stRec/stAbs <- updateStats) -->
+<!-- STEP 3B: Create Employee (nName/nId MANUAL unique/nPass/nDesg/nMob/nStore/nStoreArea/nStoreLat/nStoreLon/nStoreLink -> createEmployee/autofillEmpId suggest-only) -->
+<!-- STEP 3C: All Employees table (empTable <- renderEmpTable, delete -> delEmp) -->
+<!-- STEP 3D: Attendance records + filters (fDate/fEmp/fSearch/admTable <- renderAdminTable, export -> exportCSV, clear -> clearRecords) -->
+<!-- STEP 3E: Change Admin creds (cAdmCurPass/cAdmId/cAdmMob/cAdmNewPass/cAdmConfPass -> updateAdminCreds) -->
+<!-- FUTURE: For a new admin feature (e.g. Salary/Report), add a new .card here -->
+<div id="admDash" class="hidden">
+<div class="stat-cards">
+<div class="stat" onclick="statTriple('emp')" style="cursor:pointer" title="Triple-click for list"><h2 id="stEmp">0</h2><p>Total Employees</p></div>
+<div class="stat g" onclick="statTriple('present')" style="cursor:pointer" title="Triple-click for list"><h2 id="stToday">0</h2><p>Present Today (Full Day)</p></div>
+<div class="stat o" onclick="statTriple('half')" style="cursor:pointer" title="Triple-click for list"><h2 id="stHalf">0</h2><p>Half Day Today</p></div>
+<div class="stat o" onclick="statTriple('records')" style="cursor:pointer" title="Triple-click for list"><h2 id="stRec">0</h2><p>Total Records</p></div>
+<div class="stat r" onclick="statTriple('absent')" style="cursor:pointer" title="Triple-click for list"><h2 id="stAbs">0</h2><p>Absent Today</p></div>
+</div>
+<div class="hint" style="margin:-8px 0 12px">👆 Triple-click any stat card (3 quick clicks) — the employee list (Name & ID only) will open.</div>
+
+<div class="card">
+<h2>➕ Create New Employee ID</h2>
+<div class="info">Admin sets the Employee ID <b>manually</b> — type a unique ID yourself (e.g. EMP001). Store Name + <b>Latitude/Longitude</b> + Location link are required (for the 50m punch check).</div>
+<div class="grid2">
+<div><label>Employee Name *</label><input id="nName" placeholder="e.g.: Aditya Kumar"></div>
+<div><label>Employee ID * (manual — set by Admin)</label><input id="nId" placeholder="e.g.: EMP001 — manually type"><div class="hint">✍️ Admin types a unique ID manually. Duplicate IDs are not allowed. Use ↻ for a suggestion.</div></div>
+<div><label>Password * (preset: MAIPL@001)</label><input id="nPass" value="MAIPL@001" placeholder="MAIPL@001"><div class="hint">🔑 Default preset: <b>MAIPL@001</b> — change it here if needed.</div></div>
+<div><label>Designation</label><input id="nDesg" placeholder="e.g.: Helper, Driver"></div>
+<div><label>Mobile</label><input id="nMob" placeholder="Mobile number"></div>
+<div><label>🏬 Store Name *</label><input id="nStore" placeholder="e.g.: Main Branch, Mumbai Store"></div>
+<div><label>🏙️ Store Area</label><input id="nStoreArea" placeholder="e.g.: Andheri West, Mumbai"><div class="hint">Area/locality of the Store (optional, shown in tables).</div></div>
+<div><label>🧭 Store Latitude * (e.g. 19.0760)</label><input id="nStoreLat" type="number" step="any" placeholder="e.g.: 19.0760"></div>
+<div><label>🧭 Store Longitude * (e.g. 72.8777)</label><input id="nStoreLon" type="number" step="any" placeholder="e.g.: 72.8777"></div>
+<div style="grid-column:1/-1"><label>📍 Store Location (Via Link) *</label><input id="nStoreLink" class="link-input" placeholder="Paste Google Maps link e.g.: https://maps.google.com/?q=19.07,72.87"><div class="hint">The Link is auto-generated when you enter Lat/Lon. Or paste a Link and extract Lat/Lon with 🔗 — this location is used for the 50m punch check.</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+<button class="btn btn-grey btn-small" onclick="fillLinkFromLatLon()">📍 Generate Link from Lat/Lon</button>
+<button class="btn btn-grey btn-small" onclick="fillLatLonFromLink()">🔗 Extract Lat/Lon from Link</button>
+</div></div>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button class="btn btn-blue" style="flex:3 1 200px;min-width:0" onclick="createEmployee()">➕ Create ID</button>
+<button class="btn btn-grey" style="flex:1 1 120px;min-width:0" onclick="autofillEmpId(true)">↻ Suggest ID</button>
+</div>
+</div>
+
+<div class="card">
+<h2>👥 All Employees</h2>
+<div style="overflow-x:auto"><table id="empTable"><thead><tr><th>ID</th><th>Name</th><th>Password</th><th>Designation</th><th>Mobile</th><th>🏬 Store Name</th><th>🏙️ Store Area</th><th>🧭 Lat / Lon</th><th>📍 Store Location</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+</div>
+
+<div class="card">
+<h2>🏬 Store Areas — Location Wise</h2>
+<div class="info">Every Store's <b>Name + Area + Latitude/Longitude + Maps Link</b> appears here (auto-grouped from employee Stores). The 50m punch check uses this location.</div>
+<div style="overflow-x:auto"><table id="storeTable"><thead><tr><th>🏬 Store Name</th><th>🏙️ Store Area</th><th>🧭 Latitude</th><th>🧭 Longitude</th><th>📍 Maps Link</th><th>👥 Employees</th></tr></thead><tbody></tbody></table></div>
+</div>
+
+<div class="card">
+<h2>📊 All Attendance Records (Table Format) — Every Month</h2>
+<div class="info">Admin keeps <b>full data for every month</b> (never resets). Filter by month or date and download CSV.</div>
+<div class="filters">
+<input type="month" id="fMonth" onchange="renderAdminTable()" title="Month filter">
+<input type="date" id="fDate" onchange="renderAdminTable()">
+<select id="fEmp" onchange="renderAdminTable()"><option value="">All Employees</option></select>
+<input id="fSearch" placeholder="🔍 Search name / ID..." oninput="renderAdminTable()">
+<button class="btn btn-grey btn-small" onclick="clearAdminFilters()">✖ Clear Filters</button>
+<button class="btn btn-green btn-small" onclick="exportCSV()">⬇ Excel/CSV Download</button>
+<button class="btn btn-red btn-small" onclick="clearRecords()">🗑 Clear All Data</button>
+</div>
+<div style="overflow-x:auto"><table id="admTable">
+<thead><tr><th>ID</th><th>Name</th><th>🏬 Store</th><th>🏙️ Area</th><th>📍 Store Link</th><th>Date</th><th>In ⏰</th><th>In 📸</th><th>In 📍 Via Link</th><th>Out ⏰</th><th>Out 📸</th><th>Out 📍 Via Link</th><th>Hours</th><th>Status</th></tr></thead>
+<tbody></tbody></table></div>
+</div>
+
+<div class="card">
+<h2>🔐 Change Admin ID & Password</h2>
+<div class="info">Current Admin ID: <b id="curAdmIdShow">admin</b> | Mobile: <b id="curAdmMobShow">-</b> | Security Qs: <b id="curAdmSecShow">-</b> — update the Admin login + 4 recovery answers here.</div>
+<!-- STEP 3E-i: Admin basic fields (verify + new ID + mobile Q1) -->
+<div class="grid2">
+<div><label>Current Password * (verification)</label><input id="cAdmCurPass" type="password" placeholder="Enter current password"></div>
+<div><label>New Admin ID *</label><input id="cAdmId" placeholder="e.g.: admin002"></div>
+<div><label>❓ Q1: Admin Mobile Number * (for password recovery)</label><input id="cAdmMob" type="tel" maxlength="10" placeholder="10-digit mobile number"></div>
+<div><label>New Password *</label><input id="cAdmNewPass" type="password" placeholder="Enter new password"></div>
+<div style="grid-column:1/-1"><label>Confirm New Password *</label><input id="cAdmConfPass" type="password" placeholder="Confirm new password"></div>
+</div>
+<!-- STEP 3E-ii: Security questions Q2/Q3/Q4 (compulsory for forget-password, one wrong answer = no reset) -->
+<div class="info" style="margin-top:14px">🛡️ <b>Security Questions (compulsory for Forget Password):</b> saving all three answers is required. All four (Mobile + these 3) must match at reset time.</div>
+<div class="grid2">
+<div><label>❓ Q2: Favorite Movie *</label><input id="cAdmMovie" placeholder="e.g.: Sholay"></div>
+<div><label>❓ Q3: Birth Place *</label><input id="cAdmBirth" placeholder="e.g.: Mumbai"></div>
+<div style="grid-column:1/-1"><label>❓ Q4: Class 10th School Name *</label><input id="cAdmSchool" placeholder="e.g.: St. Mary School"></div>
+</div>
+<button class="btn btn-orange" onclick="updateAdminCreds()">🔄 Update Admin ID & Password</button>
+</div>
+</div>
+
+</div>
+
+<!-- ============ STEP 4: POPUP MODALS ============ -->
+<!-- STEP 4A: Forgot password modal (4 compulsory Qs: fAdmMob/fAdmMovie/fAdmBirth/fAdmSchool + new pass -> resetAdminPassword) -->
+<!-- NOTE: Reset-to-Default button has been removed (security). Forgot link is shown ONLY on the admin password step. -->
+<!-- STEP 4B: Clear-all warning modal (clearModal -> confirmClearRecords/closeClearModal) -->
+<!-- STEP 4C: Photo zoom modal (imgModal/modalImg <- zoom/zoomSrc) -->
+<!-- FUTURE: For a new popup, add a new div.modal.hidden in this same pattern -->
+<div id="forgotModal" class="modal hidden">
+<div class="modal-box" style="text-align:left">
+<h3 style="text-align:center">📱 Forgot Admin Password</h3>
+<p style="text-align:center">Enter the correct answers to all <b>compulsory questions</b> — <b>if even one is wrong, the password will not reset.</b></p>
+<label>Admin ID *</label><input id="fAdmId" placeholder="e.g.: admin">
+<!-- STEP 4A-i: Q1 Mobile -->
+<label>❓ Q1: Registered Mobile Number *</label><input id="fAdmMob" type="tel" maxlength="10" placeholder="10-digit mobile number">
+<!-- STEP 4A-ii: Q2/Q3/Q4 security answers -->
+<label>❓ Q2: Favorite Movie *</label><input id="fAdmMovie" placeholder="Your favorite movie">
+<label>❓ Q3: Birth Place *</label><input id="fAdmBirth" placeholder="Your birth place">
+<label>❓ Q4: Class 10th School Name *</label><input id="fAdmSchool" placeholder="Your class 10th school name">
+<label>New Password *</label><input id="fAdmNewPass" type="password" placeholder="Enter new password">
+<label>Confirm New Password *</label><input id="fAdmConfPass" type="password" placeholder="Confirm new password">
+<div class="modal-btns" style="margin-top:14px">
+<button class="btn btn-grey" onclick="closeForgotModal()">❌ Cancel</button>
+<button class="btn btn-green" onclick="resetAdminPassword()">🔄 Reset Password</button>
+</div>
+</div>
+</div>
+
+<div id="clearModal" class="modal hidden">
+<div class="modal-box">
+<h3>⚠️ Warning</h3>
+<p style="font-size:17px;font-weight:700;color:#111">Are you sure you want to delete?</p>
+<p>This action will <b>permanently delete all attendance records</b>. This cannot be undone.</p>
+<div class="modal-btns">
+<button class="btn btn-grey" onclick="closeClearModal()">❌ Cancel</button>
+<button class="btn btn-red" onclick="confirmClearRecords()">🗑 Yes, Delete All</button>
+</div>
+</div>
+</div>
+
+<div id="empSettingsModal" class="modal hidden">
+<div class="modal-box" style="text-align:left">
+<h3 style="text-align:center">⚙️ Employee Settings</h3>
+<p style="text-align:center">View your profile and change your password.</p>
+<label>1. Employee Name</label><input id="sEmpName" readonly>
+<label>2. Employee ID</label><input id="sEmpId" readonly>
+<label>3. Designation</label><input id="sEmpDesg" readonly>
+<label>4. Store</label><input id="sEmpStore" readonly>
+<div class="info" style="margin-top:14px">🔐 <b>Password Change:</b> enter the current password, then type the new password twice.</div>
+<label>Current Password *</label><input id="sEmpCurPass" type="password" placeholder="Current password">
+<label>New Password * (min 4 chars)</label><input id="sEmpNewPass" type="password" placeholder="New password">
+<label>Confirm New Password *</label><input id="sEmpConfPass" type="password" placeholder="Confirm new password">
+<div class="modal-btns" style="margin-top:14px">
+<button class="btn btn-grey" onclick="closeEmpSettings()">❌ Close</button>
+<button class="btn btn-green" onclick="empChangePassword()">🔄 Change Password</button>
+</div>
+</div>
+</div>
+
+<div id="empForgotModal" class="modal hidden">
+<div class="modal-box" style="text-align:left">
+<h3 style="text-align:center">📱 Forgot Employee Password</h3>
+<p style="text-align:center">Enter your <b>Employee ID + Registered Mobile</b> — the new password is set only if both match.</p>
+<label>Employee ID *</label><input id="eForgotId" placeholder="e.g.: EMP001">
+<label>Registered Mobile Number *</label><input id="eForgotMob" type="tel" maxlength="10" placeholder="Mobile number given to Admin">
+<label>New Password * (min 4 chars)</label><input id="eForgotNewPass" type="password" placeholder="New password">
+<label>Confirm New Password *</label><input id="eForgotConfPass" type="password" placeholder="Confirm new password">
+<div class="modal-btns" style="margin-top:14px">
+<button class="btn btn-grey" onclick="closeEmpForgotModal()">❌ Cancel</button>
+<button class="btn btn-green" onclick="resetEmpPassword()">🔄 Reset Password</button>
+</div>
+</div>
+</div>
+
+<div id="firstLoginModal" class="modal hidden">
+<div class="modal-box" style="text-align:left">
+<h3 style="text-align:center">🔑 First Login — Password Change Compulsory</h3>
+<p style="text-align:center">Welcome <b id="firstLoginName"></b>! Setting a new password on first login is <b>compulsory</b> (change the preset <b>MAIPL@001</b>). You cannot proceed without changing it.</p>
+<label>New Password * (min 4 chars, different from MAIPL@001)</label><input id="firstNewPass" type="password" placeholder="New password">
+<label>Confirm New Password *</label><input id="firstConfPass" type="password" placeholder="Confirm new password">
+<div class="modal-btns" style="margin-top:14px">
+<button class="btn btn-green" onclick="firstLoginChange()">✅ Set New Password & Continue</button>
+</div>
+</div>
+</div>
+
+<div id="statListModal" class="modal hidden">
+<div class="modal-box" style="text-align:left">
+<h3 style="text-align:center" id="statListTitle">List</h3>
+<p style="text-align:center" id="statListSub"></p>
+<div style="overflow-x:auto;max-height:50vh;overflow-y:auto"><table id="statListTable" style="min-width:0"><thead><tr><th>#</th><th>Employee Name</th><th>Employee ID</th></tr></thead><tbody></tbody></table></div>
+<div class="modal-btns" style="margin-top:14px">
+<button class="btn btn-grey" onclick="closeStatList()">❌ Close</button>
+</div>
+</div>
+</div>
+
+<div id="imgModal" class="modal hidden" onclick="this.classList.add('hidden')"><img id="modalImg" src=""></div>
+
+<script>
+// ============================================================
+// JS STEP 0: STORAGE LAYER (localStorage)
+// K_EMP = employees list, K_REC = attendance records, K_ADMIN = admin creds
+// getEmp/setEmp, getRec/setRec = JSON read/write helpers
+// FUTURE: For new data (e.g. leaves/salary), add K_NEW + get/set here
+// ============================================================
+const K_EMP='get_attend_employees', K_REC='get_attend_records', K_ADMIN='get_attend_admin';
+const getEmp=()=>JSON.parse(localStorage.getItem(K_EMP)||'[]');
+const setEmp=a=>localStorage.setItem(K_EMP,JSON.stringify(a));
+const getRec=()=>JSON.parse(localStorage.getItem(K_REC)||'[]');
+const setRec=a=>localStorage.setItem(K_REC,JSON.stringify(a));
+// STEP 0A: Month helpers (employee month-wise view + new-month auto reset)
+// monthStr(ds) = 'YYYY-MM' | curMonthStr() = this month's 'YYYY-MM'
+// NOTE: Admin-side WeekOff/StoreClose management REMOVED — Sunday auto + employee-side marking only.
+// STEP 0B: SESSION (no logout on refresh + role-based auto-logout: Employee 15 min, Admin 1H)
+// K_SES = {role:'emp'|'adm', empId, loginAt} | SES_EMP_MS = 15 min | SES_ADM_MS = 1 hour
+// RULE: Logout on only 2 conditions — (1) role-based auto timeout (emp 15m / adm 1H), (2) Logout button click. Session restores on refresh.
+const K_SES='get_attend_session', SES_EMP_MS=15*60*1000, SES_ADM_MS=3600*1000;
+const SES_TIMEOUT_MS=SES_EMP_MS;
+function sesTimeoutFor(s){return (s&&s.role==='adm')?SES_ADM_MS:SES_EMP_MS;}
+let sesTimer=null, sesCountInt=null;
+const getSession=()=>{try{return JSON.parse(localStorage.getItem(K_SES)||'null');}catch(e){return null;}};
+const saveSession=s=>localStorage.setItem(K_SES,JSON.stringify(s));
+const clearSession=()=>localStorage.removeItem(K_SES);
+function sesRemaining(){const s=getSession();if(!s||!s.loginAt)return 0;return sesTimeoutFor(s)-(Date.now()-s.loginAt);}
+function startSesTimers(){
+  stopSesTimers();
+  const left=sesRemaining();
+  if(left<=0){doAutoLogout();return;}
+  sesTimer=setTimeout(doAutoLogout,left);
+  updSesLeft();
+  sesCountInt=setInterval(updSesLeft,30000);
+}
+function stopSesTimers(){if(sesTimer){clearTimeout(sesTimer);sesTimer=null;}if(sesCountInt){clearInterval(sesCountInt);sesCountInt=null;}const el=document.getElementById('sesLeft');if(el)el.textContent='';}
+function updSesLeft(){
+  const el=document.getElementById('sesLeft');if(!el)return;
+  const left=sesRemaining();
+  if(left<=0){el.textContent='';return;}
+  const m=Math.floor(left/60000);
+  el.textContent=m>=1?('⏳ Auto-logout: '+m+'m'):('⏳ Auto-logout: <1m');
+}
+function doAutoLogout(){const s=getSession();const who=(s&&s.role==='adm')?'1 hour':'15 minutes';stopSesTimers();clearSession();alert('⏰ '+who+' completed — you have been logged out automatically! Please log in again.');location.reload();}
+// ------------------------------------------------------------
+// JS STEP 1: ADMIN AUTH (default + load/save + info display)
+// DEFAULT_ADMIN = first-time login (admin / Admin@124)
+// + 4 recovery answers: mob(Q1) + movie(Q2) + birth(Q3) + school(Q4)
+// getAdmin() = load + old admin001 migration + missing-field fallback
+// setAdmin() = save + refresh UI via renderAdminInfo()
+// renderAdminInfo() = shows the current admin in header/login/change-card
+// updateAdminCreds() = updates ID+Mobile+Password+3 answers from the Change Admin card
+// FUTURE: To add admin roles/permissions, extend the fields in this same object
+// FUTURE: To add a 5th question, add the field in DEFAULT/get/set/render/update/reset
+// ------------------------------------------------------------
+const DEFAULT_ADMIN={id:'admin',pass:'Admin@124',mob:'',movie:'',birth:'',school:''};
+// STEP 1A: Admin load (falls back to '' when new fields are missing in old saved data)
+function getAdmin(){try{const a=JSON.parse(localStorage.getItem(K_ADMIN)||'null');if(a&&a.id&&a.pass){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';if(a.id==='admin001'){a.id='admin';localStorage.setItem(K_ADMIN,JSON.stringify(a));}return a;}}catch(e){}return {...DEFAULT_ADMIN};}
+// STEP 1B: Admin save (preserving all 4 answers is mandatory)
+function setAdmin(a){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';localStorage.setItem(K_ADMIN,JSON.stringify(a));renderAdminInfo();}
+// STEP 1C: Admin info UI refresh (current ID/mobile/security-status + form autofill)
+function renderAdminInfo(){
+ const ad=getAdmin();
+ const info=document.getElementById('admInfo');
+ if(info)info.innerHTML='Admin ID: <b>'+ad.id+'</b> &nbsp;|&nbsp; Password: <b>'+ad.pass+'</b>'+(ad.mob?' &nbsp;|&nbsp; 📱 '+ad.mob:'');
+ const cur=document.getElementById('curAdmIdShow');
+ if(cur)cur.textContent=ad.id;
+ const curM=document.getElementById('curAdmMobShow');
+ if(curM)curM.textContent=ad.mob||'- (not set)';
+ // STEP 1C-i: Security questions set-status (whether all three are set)
+ const curS=document.getElementById('curAdmSecShow');
+ if(curS)curS.textContent=(ad.movie&&ad.birth&&ad.school)?'✅ Set (3/3)':'❌ Not set';
+ const inp=document.getElementById('cAdmId');
+ if(inp&&!inp.value)inp.value=ad.id;
+ const mobInp=document.getElementById('cAdmMob');
+ if(mobInp&&!mobInp.value&&ad.mob)mobInp.value=ad.mob;
+ // STEP 1C-ii: Security answers autofill (so admin can see what is saved)
+ const movInp=document.getElementById('cAdmMovie');
+ if(movInp&&!movInp.value&&ad.movie)movInp.value=ad.movie;
+ const birInp=document.getElementById('cAdmBirth');
+ if(birInp&&!birInp.value&&ad.birth)birInp.value=ad.birth;
+ const schInp=document.getElementById('cAdmSchool');
+ if(schInp&&!schInp.value&&ad.school)schInp.value=ad.school;
+}
+// STEP 1D: Admin update (ID + Q1 mobile + new password + Q2/Q3/Q4 answers save)
+function updateAdminCreds(){
+ const curP=document.getElementById('cAdmCurPass').value.trim();
+ const newId=document.getElementById('cAdmId').value.trim();
+ const newMob=document.getElementById('cAdmMob').value.trim();
+ const newP=document.getElementById('cAdmNewPass').value.trim();
+ const confP=document.getElementById('cAdmConfPass').value.trim();
+ // STEP 1D-i: Q2/Q3/Q4 answers read
+ const newMovie=document.getElementById('cAdmMovie').value.trim();
+ const newBirth=document.getElementById('cAdmBirth').value.trim();
+ const newSchool=document.getElementById('cAdmSchool').value.trim();
+ const ad=getAdmin();
+ if(!curP||!newId||!newMob||!newP||!confP) return alert('Please fill all admin fields (ID, Mobile, Password)');
+  if(!newMovie||!newBirth||!newSchool) return alert('Please fill all 3 security answers (Q2/Q3/Q4) — they are compulsory for Forget Password');
+  if(curP!==ad.pass) return alert('❌ Wrong current password!');
+  if(!/^\d{10}$/.test(newMob)) return alert('❌ Mobile number must be 10 digits!');
+  if(newP!==confP) return alert('❌ New password and confirm password do not match!');
+  if(newP.length<4) return alert('❌ New password must be at least 4 characters');
+ setAdmin({id:newId,pass:newP,mob:newMob,movie:newMovie,birth:newBirth,school:newSchool});
+ document.getElementById('cAdmCurPass').value='';
+ document.getElementById('cAdmNewPass').value='';
+ document.getElementById('cAdmConfPass').value='';
+ alert('✅ Admin ID, Mobile, Password + 3 security answers updated!\nNew ID: '+newId+'\nMobile: '+newMob);
+}
+// ------------------------------------------------------------
+// JS STEP 2: FORGOT / RESET ADMIN PASSWORD (4 compulsory questions)
+// RULE: Even one wrong answer out of the four = NO reset (strict check)
+// Q1 = Mobile (exact match) | Q2 = Favorite Movie | Q3 = Birth Place | Q4 = Class 10th School
+// (Q2/Q3/Q4 = case-insensitive match, so CAPS/small-case never causes an issue)
+// openForgotModal/closeForgotModal = popup open/close
+// resetAdminPassword() = verify ID + 4 answers to set a new password (Forgot link ONLY on the Step-4 password screen)
+// (Reset-to-Default REMOVED — no shortcut reset for security)
+// FUTURE: To add OTP/SMS reset, add a verify-OTP step here
+// FUTURE: To add a new question, add the modal HTML + the check here + the field in STEP 1
+// ------------------------------------------------------------
+function openForgotModal(){
+ // STEP 2A: Forgot form reset (saare 4 answers + new password fields clear)
+ ['fAdmId','fAdmMob','fAdmMovie','fAdmBirth','fAdmSchool','fAdmNewPass','fAdmConfPass'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+ document.getElementById('forgotModal').classList.remove('hidden');
+}
+function closeForgotModal(){document.getElementById('forgotModal').classList.add('hidden');}
+// STEP 2B: 4-question verification + password reset
+function resetAdminPassword(){
+ const id=document.getElementById('fAdmId').value.trim();
+  // STEP 2B-i: Read all four answers
+ const mob=document.getElementById('fAdmMob').value.trim();
+ const movie=document.getElementById('fAdmMovie').value.trim();
+ const birth=document.getElementById('fAdmBirth').value.trim();
+ const school=document.getElementById('fAdmSchool').value.trim();
+ const np=document.getElementById('fAdmNewPass').value.trim();
+ const cp=document.getElementById('fAdmConfPass').value.trim();
+  if(!id||!mob||!movie||!birth||!school||!np||!cp) return alert('Please fill all fields — all four questions (Q1-Q4) are compulsory');
+  const ad=getAdmin();
+   // STEP 2B-ii: Check - whether security setup exists
+   if(!ad.mob||!ad.movie||!ad.birth||!ad.school) return alert('❌ Security questions are not set! Please log in as Admin and save all four answers in the Change Admin card.');
+  if(id.toLowerCase()!==String(ad.id).toLowerCase()) return alert('❌ Admin ID did not match!');
+  // STEP 2B-iii: Q1 verify (exact 10-digit match)
+  if(mob!==ad.mob) return alert('❌ Q1 Wrong: Mobile number did not match!');
+  // STEP 2B-iv: Q2 verify (favorite movie, CAPS ignore)
+  if(movie.toLowerCase()!==String(ad.movie).toLowerCase()) return alert('❌ Q2 Wrong: Favorite movie did not match!');
+  // STEP 2B-v: Q3 verify (birth place, CAPS ignore)
+  if(birth.toLowerCase()!==String(ad.birth).toLowerCase()) return alert('❌ Q3 Wrong: Birth place did not match!');
+  // STEP 2B-vi: Q4 verify (school, CAPS ignore)
+  if(school.toLowerCase()!==String(ad.school).toLowerCase()) return alert('❌ Q4 Wrong: Class 10th school name did not match!');
+// STEP 2B-vii: All correct -> set new password (preserve answers)
+  if(np!==cp) return alert('❌ New password and confirm password do not match!');
+  if(np.length<4) return alert('❌ Password must be at least 4 characters');
+  setAdmin({id:ad.id,pass:np,mob:ad.mob,movie:ad.movie,birth:ad.birth,school:ad.school});
+  closeForgotModal();
+  alert('✅ Password reset successful! (4/4 answers correct)\nPlease log in with the new password.');
+}
+// NOTE: resetAdminDefault() PERMANENTLY REMOVED (security) — so no employee can trigger a default reset.
+renderAdminInfo();
+let curEmp=null, photoData='', pendingPhoto='', locData=null, stream=null;
+
+// ------------------------------------------------------------
+// JS STEP 3: DATE/TIME HELPERS
+// todayStr() = YYYY-MM-DD (record key), timeStr() = IN/OUT time
+// fmtDate() = display DD/MM/YYYY
+// FUTURE: To change the date format, change it only here
+// ------------------------------------------------------------
+
+function todayStr(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function timeStr(d=new Date()){return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+function fmtDate(ds){const [y,m,dd]=ds.split('-');return dd+'/'+m+'/'+y;}
+// ------------------------------------------------------------
+// JS STEP 3A: TIME RULES (Check-IN 10AM-1PM, OUT till 11:59:50PM, Half-Day <6PM)
+// IN_START=10:00, IN_END=13:00 (1PM), OUT_DEADLINE=23:59:50, HALF_CUTOFF=18:00
+// secsOfNow()/secsOfTimeStr() = "hh:mm:ss AM/PM" -> seconds (0-86399)
+// getStatus(r) = Present / Half Day / IN Only / Store Close / Week Off
+//   - type 'StoreClose' -> Store Close (blue) | type 'WeekOff' -> Week Off (teal)
+//   - Duty + OUT<6PM -> Half Day | Duty + OUT>=6PM -> Present | no OUT -> IN Only
+// FUTURE: To change the time window, change the constants only here
+// ------------------------------------------------------------
+const IN_START_SEC=10*3600, IN_END_SEC=13*3600, OUT_DEADLINE_SEC=23*3600+59*60+50, HALF_CUTOFF_SEC=18*3600;
+function secsOfNow(d=new Date()){return d.getHours()*3600+d.getMinutes()*60+d.getSeconds();}
+function secsOfTimeStr(s){try{const m=String(s||'').match(/(\d+):(\d+):(\d+)\s*(AM|PM)?/i);if(!m)return -1;let[h,mi,se]=[+m[1],+m[2],+m[3]];const ap=(m[4]||'').toUpperCase();if(ap.startsWith('P')){if(h<12)h+=12;}if(ap.startsWith('A')){if(h===12)h=0;}return h*3600+mi*60+se;}catch(e){return -1;}}
+function locLinkOf(lat,lon){if(!lat||!lon)return '';return 'https://maps.google.com/?q='+lat+','+lon;}
+function recType(r){return (r&&r.type)||'Duty';}
+function getStatus(r){
+  if(!r) return {label:'—',cls:'grey'};
+  const t=recType(r);
+  if(t==='StoreClose') return {label:'Store Close',cls:'blue'};
+  if(t==='WeekOff') return {label:'Week Off',cls:'teal'};
+  if(!r.outTime) return {label:'IN Only',cls:'half'};
+  const o=secsOfTimeStr(r.outTime);
+  if(o>=0&&o<HALF_CUTOFF_SEC) return {label:'Half Day',cls:'half'};
+  return {label:'Present',cls:'present'};
+}
+function statusBadge(r){const s=getStatus(r);return '<span class="badge '+s.cls+'">'+s.label+'</span>';}
+// ------------------------------------------------------------
+// JS STEP 3B: SUNDAY AUTO WEEK-OFF + MONTH HELPERS (NO admin holiday mgmt, NO back-date)
+// isSundayStr(ds) = Sunday? | dayName(ds) | monthStr(ds)='YYYY-MM' | curMonthStr()
+// RULE: Automatic Week Off every Sunday (as soon as the employee opens the app). Store Close is marked by the employee.
+// RULE: Back-date attendance is never allowed — punch() works only on todayStr().
+// RULE: Employee view resets every month (default=current month), Admin keeps every month's data.
+// ------------------------------------------------------------
+function isSundayStr(ds){try{const [y,m,d]=ds.split('-').map(Number);return new Date(y,m-1,d).getDay()===0;}catch(e){return false;}}
+function dayName(ds){try{const [y,m,d]=ds.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('en-IN',{weekday:'long'});}catch(e){return '';}}
+function monthStr(ds){return String(ds||'').slice(0,7);}
+function curMonthStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}
+function daysInMonth(ym){try{const [y,m]=ym.split('-').map(Number);return new Date(y,m,0).getDate();}catch(e){return 30;}}
+
+// ------------------------------------------------------------
+// JS STEP 4: LIVE CLOCK (updates empDate/empTime every 1 sec)
+// FUTURE: To change the clock format, edit here
+// ------------------------------------------------------------
+setInterval(()=>{const n=new Date();
+document.getElementById('empDate').textContent=n.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('empTime').textContent=timeStr(n);},1000);
+
+// ------------------------------------------------------------
+// JS STEP 5: LOGIN TABS + STEPPED ADMIN LOGIN (3-step) + DASHBOARD + SESSION
+// switchTab('emp'/'adm') = login tabs toggle (+admin steps reset)
+// employeeLogin() = empId+pass match -> session save -> showDash('emp')
+// ADMIN 3-STEP: admNextToHuman() [ID check] -> admVerifyHuman() [captcha+checkbox → DIRECT password] -> adminLogin() [password]
+// Forgot link is ONLY on the password step so that employees cannot reset the admin password.
+// SESSION: no logout on refresh (tryRestoreSession), logout only on (1) role-based auto timeout emp-15m/adm-1H (2) Logout button.
+// ------------------------------------------------------------
+let admCaptchaAns=0, admIdOk='', admHumanOk=false;
+function switchTab(t){const e=t==='emp';
+document.getElementById('tabEmp').classList.toggle('active',e);
+document.getElementById('tabAdm').classList.toggle('active',!e);
+document.getElementById('empLogin').classList.toggle('hidden',!e);
+document.getElementById('admLogin').classList.toggle('hidden',e);
+if(!e)resetAdmSteps();}
+function resetAdmSteps(){
+  admIdOk='';admHumanOk=false;
+  ['admStep1','admStep2','admStep4'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.classList.toggle('hidden',i!==0);});
+  const s1=document.getElementById('admStep1');if(s1)s1.classList.remove('done');
+  const s2=document.getElementById('admStep2');if(s2)s2.classList.remove('done');
+  const p=document.getElementById('admPass');if(p)p.value='';
+  const c=document.getElementById('captchaAns');if(c)c.value='';
+  const h=document.getElementById('humanChk');if(h)h.checked=false;
+  refreshCaptcha();
+}
+function refreshCaptcha(){
+  const a=Math.floor(Math.random()*9)+1, b=Math.floor(Math.random()*9)+1;
+  admCaptchaAns=a+b;
+  const q=document.getElementById('captchaQ');if(q)q.textContent=a+' + '+b+' = ?';
+  const c=document.getElementById('captchaAns');if(c)c.value='';
+}
+// STEP 5A: Step-1 Admin ID verify
+function admNextToHuman(){
+  const id=document.getElementById('admId').value.trim();
+  if(!id) return alert('Please enter Admin ID');
+  const ad=getAdmin();
+  if(id.toLowerCase()!==String(ad.id).toLowerCase()) return alert('❌ Wrong Admin ID! (Employees cannot proceed further)');
+  admIdOk=ad.id;
+  document.getElementById('admVerIdShow').textContent='('+ad.id+')';
+  document.getElementById('admStep1').classList.add('done');
+  document.getElementById('admStep1').classList.add('hidden');
+  document.getElementById('admStep2').classList.remove('hidden');
+  refreshCaptcha();
+}
+// STEP 5B: Step-2 Captcha + Human verification (dono compulsory) → Verify & Continue = DIRECT password step
+function admBackToId(){document.getElementById('admStep2').classList.add('hidden');document.getElementById('admStep1').classList.remove('hidden');}
+function admBackToId2(){document.getElementById('admStep4').classList.add('hidden');document.getElementById('admStep2').classList.remove('hidden');}
+function admVerifyHuman(){
+  const ans=Number(document.getElementById('captchaAns').value);
+  const chk=document.getElementById('humanChk').checked;
+  if(!chk) return alert('❌ Please tick "I am human" checkbox!');
+  if(ans!==admCaptchaAns) {refreshCaptcha();return alert('❌ Wrong captcha! A new captcha has been generated, please try again.');}
+  admHumanOk=true;
+  document.getElementById('admStep2').classList.add('done');
+  document.getElementById('admStep2').classList.add('hidden');
+  document.getElementById('admStep4').classList.remove('hidden');
+}
+
+// ===== LOGIN (session emp-15m/adm-1H auto-logout + first-login compulsory change) =====
+function needsPassChange(emp){try{if(!emp)return false;if(emp.mustChangePass===true)return true;if(emp.mustChangePass===false)return false;if(typeof DEFAULT_EMP_PASS!=='undefined'&&emp.pass===DEFAULT_EMP_PASS)return true;return false;}catch(e){return false;}}
+function employeeLogin(){const id=document.getElementById('empId').value.trim(), p=document.getElementById('empPass').value.trim();
+if(!id||!p) return alert('Please enter ID and Password');
+const f=getEmp().find(x=>x.id.toLowerCase()===id.toLowerCase()&&x.pass===p);
+if(!f) return alert('❌ Wrong ID or Password! Please get the correct ID from Admin.');
+curEmp=f;saveSession({role:'emp',empId:f.id,loginAt:Date.now()});showDash('emp');startSesTimers();
+if(needsPassChange(f)){openFirstLoginModal();}}
+function openFirstLoginModal(){
+  const nm=document.getElementById('firstLoginName');if(nm)nm.textContent=curEmp?curEmp.name:'';
+  ['firstNewPass','firstConfPass'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('firstLoginModal').classList.remove('hidden');
+}
+function firstLoginChange(){
+  const np=document.getElementById('firstNewPass').value.trim();
+  const cp=document.getElementById('firstConfPass').value.trim();
+  if(!np||!cp) return alert('Please fill new + confirm password');
+  if(np.length<4) return alert('❌ New password min 4 characters!');
+  if(np!==cp) return alert('❌ New password and confirm password do not match!');
+  if(typeof DEFAULT_EMP_PASS!=='undefined'&&np===DEFAULT_EMP_PASS) return alert('❌ Please choose a new password different from the preset MAIPL@001!');
+  if(curEmp&&np===curEmp.pass) return alert('❌ Please choose a new password different from the old password!');
+  const arr=getEmp();
+  const idx=arr.findIndex(x=>x.id.toLowerCase()===String(curEmp.id).toLowerCase());
+  if(idx<0) return alert('Employee not found!');
+  arr[idx].pass=np;arr[idx].mustChangePass=false;setEmp(arr);curEmp=arr[idx];
+  document.getElementById('firstLoginModal').classList.add('hidden');
+  alert('✅ New password set! You can now mark attendance.');
+}
+// STEP 5D: Step-3 Password login (ID + Captcha/Human verification compulsory, then direct password)
+function adminLogin(){
+if(!admIdOk) return alert('❌ Please verify Admin ID in Step 1 first!');
+if(!admHumanOk) return alert('❌ Please complete Step 2 Captcha + Human Verification (Verify & Continue) first!');
+const p=document.getElementById('admPass').value.trim();
+if(!p) return alert('Please enter Admin Password (Step 3)');
+const ad=getAdmin();
+if(admIdOk.toLowerCase()===String(ad.id).toLowerCase()&&p===ad.pass){saveSession({role:'adm',loginAt:Date.now()});showDash('adm');startSesTimers();}
+else alert('❌ Wrong Admin Password!\n(No hint is shown for security. Please reset via the Forgot link.)');}
+function showDash(w){
+document.getElementById('loginSection').classList.add('hidden');
+document.getElementById('logoutBtn').classList.remove('hidden');
+if(w==='emp'){document.getElementById('empDash').classList.remove('hidden');
+document.getElementById('hdrUser').textContent='👷 '+curEmp.name;
+document.getElementById('empName').textContent=curEmp.name;
+document.getElementById('empShowId').textContent=curEmp.id;
+document.getElementById('empDesg').textContent=curEmp.desg||'-';
+document.getElementById('empStore').textContent=(curEmp.store||'-')+(curEmp.storeArea?' ('+curEmp.storeArea+')':'');
+const sl=document.getElementById('empStoreLink'), slw=document.getElementById('empStoreLinkWrap');
+if(curEmp.storeLink){sl.href=curEmp.storeLink;sl.textContent='🏬 View Store Location ('+(curEmp.store||'Store')+')';slw.style.display='block';}
+else{slw.style.display='none';}
+// STEP 5E-i: Month default = current month (view auto-resets in a new month, data stays safe with Admin)
+const mm=document.getElementById('myMonth');if(mm&&!mm.value)mm.value=curMonthStr();
+startCam();getLocation();autoWeekOffSunday();renderMyTable();updateTodayStatus();refreshEmpHolidayNotice();}
+else{document.getElementById('admDash').classList.remove('hidden');
+document.getElementById('hdrUser').textContent='🔐 Admin';
+renderEmpTable();renderStoreAreas();renderAdminTable();updateStats();autofillEmpId();renderAdminInfo();}}
+function logout(){stopSesTimers();clearSession();location.reload();}
+// STEP 5E-ii: Employee Settings — Name/ID/Designation/Store view + password change
+function openEmpSettings(){
+  try{const fresh=getEmp().find(x=>x.id.toLowerCase()===String(curEmp.id).toLowerCase());if(fresh)curEmp=fresh;}catch(e){}
+  document.getElementById('sEmpName').value=curEmp.name||'';
+  document.getElementById('sEmpId').value=curEmp.id||'';
+  document.getElementById('sEmpDesg').value=curEmp.desg||'-';
+  document.getElementById('sEmpStore').value=(curEmp.store||'-')+(curEmp.storeArea?' ('+curEmp.storeArea+')':'');
+  ['sEmpCurPass','sEmpNewPass','sEmpConfPass'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('empSettingsModal').classList.remove('hidden');
+}
+function closeEmpSettings(){document.getElementById('empSettingsModal').classList.add('hidden');}
+function empChangePassword(){
+  const cur=document.getElementById('sEmpCurPass').value.trim();
+  const np=document.getElementById('sEmpNewPass').value.trim();
+  const cp=document.getElementById('sEmpConfPass').value.trim();
+  if(!cur||!np||!cp) return alert('Please fill current + new + confirm password');
+  const arr=getEmp();
+  const idx=arr.findIndex(x=>x.id.toLowerCase()===String(curEmp.id).toLowerCase());
+  if(idx<0) return alert('Employee not found!');
+  if(arr[idx].pass!==cur) return alert('❌ Wrong current password!');
+  if(np.length<4) return alert('❌ New password min 4 characters!');
+  if(np!==cp) return alert('❌ New password and confirm password do not match!');
+  arr[idx].pass=np;arr[idx].mustChangePass=false;setEmp(arr);curEmp=arr[idx];
+  ['sEmpCurPass','sEmpNewPass','sEmpConfPass'].forEach(i=>document.getElementById(i).value='');
+  closeEmpSettings();
+  alert('✅ Password changed successfully!');
+}
+// STEP 5E-iii: Employee Forgot Password — reset after verifying ID + Registered Mobile
+function openEmpForgotModal(){
+  ['eForgotId','eForgotMob','eForgotNewPass','eForgotConfPass'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('empForgotModal').classList.remove('hidden');
+}
+function closeEmpForgotModal(){document.getElementById('empForgotModal').classList.add('hidden');}
+function resetEmpPassword(){
+  const id=document.getElementById('eForgotId').value.trim();
+  const mob=document.getElementById('eForgotMob').value.trim();
+  const np=document.getElementById('eForgotNewPass').value.trim();
+  const cp=document.getElementById('eForgotConfPass').value.trim();
+  if(!id||!mob||!np||!cp) return alert('Please fill ID + Mobile + New + Confirm password');
+  const arr=getEmp();
+  const idx=arr.findIndex(x=>x.id.toLowerCase()===id.toLowerCase());
+  if(idx<0) return alert('❌ Employee ID not found! Please get the correct ID from Admin.');
+  const savedMob=String(arr[idx].mob||'').trim();
+  if(!savedMob) return alert('❌ No mobile is saved for this ID! Please contact Admin.');
+  if(mob!==savedMob) return alert('❌ Mobile number did not match! Enter the number given to Admin.');
+  if(np.length<4) return alert('❌ New password min 4 characters!');
+  if(np!==cp) return alert('❌ New password and confirm password do not match!');
+  arr[idx].pass=np;arr[idx].mustChangePass=false;setEmp(arr);
+  closeEmpForgotModal();
+  alert('✅ Password reset successful! Now log in with the new password.\nID: '+arr[idx].id);
+}
+// STEP 5E-0: Session restore on refresh (no logout) — auto-clears on expiry (emp 15 min / adm 1H)
+function tryRestoreSession(){
+  try{
+    const s=getSession();
+    if(!s||!s.loginAt)return;
+    if(Date.now()-s.loginAt>=sesTimeoutFor(s)){clearSession();return;}
+    if(s.role==='emp'&&s.empId){
+      const f=getEmp().find(x=>x.id.toLowerCase()===String(s.empId).toLowerCase());
+      if(!f){clearSession();return;}
+      curEmp=f;showDash('emp');startSesTimers();
+      if(needsPassChange(f)){openFirstLoginModal();}
+    } else if(s.role==='adm'){
+      showDash('adm');startSesTimers();
+    }
+  }catch(e){}
+}
+function updateTodayStatus(){
+const r=getRec().find(x=>x.empId===curEmp.id&&x.date===todayStr());
+const el=document.getElementById('todayStatus');
+if(!r){el.textContent=isSundayStr(todayStr())?'🌴 Sunday Week Off (Auto)':'Not marked IN yet';return;}
+const t=recType(r);
+if(t==='WeekOff'){el.textContent=r.auto?'🌴 Week Off (Sunday Auto)':'🌴 Week Off (Manual)';return;}
+if(t==='StoreClose'){el.textContent='🏬 Store Close';return;}
+if(!r.outTime){el.textContent='IN ✅ '+r.inTime+' — OUT pending';return;}
+const s=getStatus(r);
+el.textContent='IN ✅ '+r.inTime+' | OUT ✅ '+r.outTime+' → '+s.label+(s.label==='Half Day'?' 🟠 (OUT before 6 PM)':' 🟢');}
+// STEP 5E: Sunday auto Week-Off banner + Week Off MANUAL (employee can mark it on any day)
+// On Sunday the automatic Week Off record is created as soon as the app opens (via autoWeekOffSunday)
+// On non-Sunday days the employee can take MANUAL Week Off with the Week Off button
+function refreshEmpHolidayNotice(){
+  const box=document.getElementById('todayHolidayNotice');if(!box)return;
+  const sun=isSundayStr(todayStr());
+  const bIN=document.getElementById('btnIN'), bOUT=document.getElementById('btnOUT'), bSC=document.getElementById('btnSC'), bWO=document.getElementById('btnWO');
+  box.classList.remove('hidden');
+  if(sun){
+    box.classList.remove('ok');
+    box.innerHTML='🌴 Today is Sunday — <b>automatic Week Off</b> ✅ (IN/OUT/Store Close closed)';
+    if(bIN)bIN.disabled=true; if(bOUT)bOUT.disabled=true; if(bSC)bSC.disabled=true; if(bWO)bWO.disabled=true;
+  } else {
+    box.classList.add('ok');
+    box.innerHTML='✅ Store is open today. IN: 10AM–1PM • OUT: until 11:59:50PM • OUT before 6PM = Half Day.<br>🌴 You can mark today as Week Off yourself with the <b>Week Off (Manual)</b> button.';
+    if(bIN)bIN.disabled=false; if(bOUT)bOUT.disabled=false; if(bSC)bSC.disabled=false; if(bWO)bWO.disabled=false;
+  }
+}
+// STEP 5F: Sunday auto-mark (without photo/location, so Week Off appears in month status + admin table)
+function autoWeekOffSunday(){
+  try{
+    const d=todayStr();
+    if(!isSundayStr(d))return;
+    let recs=getRec();
+    if(recs.some(x=>x.empId===curEmp.id&&x.date===d))return;
+    recs.push({empId:curEmp.id,name:curEmp.name,store:curEmp.store||'',storeArea:curEmp.storeArea||'',storeLink:curEmp.storeLink||'',date:d,type:'WeekOff',inTime:'',inPhoto:'',inLat:'',inLon:'',inLocLink:'',outTime:'',outPhoto:'',outLat:'',outLon:'',outLocLink:'',auto:true});
+    setRec(recs);
+  }catch(e){}
+}
+
+// ------------------------------------------------------------
+// JS STEP 6: EMPLOYEE CRUD + MANUAL ID (set by Admin) + STORE LAT/LON MAPPING
+// nextEmpId() = suggestion only -> EMP001, EMP002... (duplicate skip)
+// autofillEmpId(force) = Suggest button fills a suggestion; on dashboard open it fills only when empty
+// STORE LOC: parseLatLonFromLink(link) / buildStoreLink(lat,lon) / fillLinkFromLatLon() / fillLatLonFromLink()
+// getStoreCoords(emp) = {lat,lon} — prefers employee.storeLat/storeLon, otherwise parses from storeLink (old data support)
+// createEmployee() = Name/MANUAL-ID/Pass + Store Name + Store Area + Lat/Lon + Link save -> setEmp (duplicate = block)
+// delEmp() = employee delete | renderEmpTable() = empTable + fEmp dropdown refresh
+// updateStats() = top stat cards refresh
+// FUTURE: To add an employee edit option, add editEmp() next to delEmp()
+// ------------------------------------------------------------
+// STEP 6A: Store Lat/Lon helpers (the 50m geofence runs on this)
+function parseLatLonFromLink(link){
+  try{
+    const s=String(link||'');
+    let m=s.match(/[?&]q=(-?\d+(\.\d+)?),(-?\d+(\.\d+)?)/i);
+    if(m)return{lat:parseFloat(m[1]),lon:parseFloat(m[3])};
+    m=s.match(/@(-?\d+(\.\d+)?),(-?\d+(\.\d+)?)/);
+    if(m)return{lat:parseFloat(m[1]),lon:parseFloat(m[3])};
+    m=s.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+    if(m)return{lat:parseFloat(m[1]),lon:parseFloat(m[2])};
+    return null;
+  }catch(e){return null;}
+}
+function buildStoreLink(lat,lon){return 'https://maps.google.com/?q='+lat+','+lon;}
+function fillLinkFromLatLon(){
+  const lat=document.getElementById('nStoreLat').value.trim(), lon=document.getElementById('nStoreLon').value.trim();
+  if(!lat||!lon) return alert('Please enter both Latitude and Longitude first!');
+  const la=parseFloat(lat), lo=parseFloat(lon);
+  if(isNaN(la)||la<-90||la>90) return alert('❌ Latitude must be between -90 and 90!');
+  if(isNaN(lo)||lo<-180||lo>180) return alert('❌ Longitude must be between -180 and 180!');
+  document.getElementById('nStoreLink').value=buildStoreLink(la,lo);
+  alert('✅ Link generated!');
+}
+function fillLatLonFromLink(){
+  const link=document.getElementById('nStoreLink').value.trim();
+  if(!link) return alert('Please paste the Store Location link first!');
+  const p=parseLatLonFromLink(link);
+  if(!p) return alert('❌ No Lat/Lon found in the link! Format: https://maps.google.com/?q=19.07,72.87');
+  document.getElementById('nStoreLat').value=p.lat;
+  document.getElementById('nStoreLon').value=p.lon;
+  alert('✅ Lat/Lon extracted: '+p.lat+', '+p.lon);
+}
+function getStoreCoords(emp){
+  try{
+    if(emp&&emp.storeLat!==undefined&&emp.storeLat!==''&&emp.storeLon!==undefined&&emp.storeLon!==''){
+      const la=parseFloat(emp.storeLat), lo=parseFloat(emp.storeLon);
+      if(!isNaN(la)&&!isNaN(lo))return{lat:la,lon:lo};
+    }
+    if(emp&&emp.storeLink){const p=parseLatLonFromLink(emp.storeLink);if(p)return p;}
+    return null;
+  }catch(e){return null;}
+}
+function nextEmpId(){
+const arr=getEmp();let max=0;
+arr.forEach(e=>{const m=String(e.id||'').match(/(\d+)\s*$/);if(m)max=Math.max(max,parseInt(m[1],10));});
+let next=max+1, id='EMP'+String(next).padStart(3,'0');
+while(arr.some(x=>x.id.toLowerCase()===id.toLowerCase())){next++;id='EMP'+String(next).padStart(3,'0');}
+return id;
+}
+const DEFAULT_EMP_PASS='MAIPL@001';
+function autofillEmpId(force){const el=document.getElementById('nId');if(!el)return;if(force){el.value=nextEmpId();return;}if(!el.value.trim())el.value=nextEmpId();const np=document.getElementById('nPass');if(np&&!np.value.trim())np.value=DEFAULT_EMP_PASS;}
+function createEmployee(){
+const n=document.getElementById('nName').value.trim(), id=document.getElementById('nId').value.trim(),
+p=document.getElementById('nPass').value.trim(), d=document.getElementById('nDesg').value.trim(), m=document.getElementById('nMob').value.trim(),
+st=document.getElementById('nStore').value.trim(),
+stArea=document.getElementById('nStoreArea').value.trim();
+let sLat=document.getElementById('nStoreLat').value.trim(), sLon=document.getElementById('nStoreLon').value.trim();
+let stLink=document.getElementById('nStoreLink').value.trim();
+if(!n||!id||!p) return alert('Name, ID and Password are required (Admin sets the ID manually)');
+if(id.length<3) return alert('❌ Employee ID must be at least 3 characters!');
+if(!st) return alert('Please enter Store Name');
+// If Lat/Lon is empty, try auto-parsing it from the Link (old flow support)
+if((!sLat||!sLon)&&stLink){const pp=parseLatLonFromLink(stLink);if(pp){sLat=String(pp.lat);sLon=String(pp.lon);document.getElementById('nStoreLat').value=sLat;document.getElementById('nStoreLon').value=sLon;}}
+if(!sLat||!sLon) return alert('Please enter Store Latitude & Longitude (you can extract it from the Link with 🔗)');
+const la=parseFloat(sLat), lo=parseFloat(sLon);
+if(isNaN(la)||la<-90||la>90) return alert('❌ Store Latitude must be between -90 and 90!');
+if(isNaN(lo)||lo<-180||lo>180) return alert('❌ Store Longitude must be between -180 and 180!');
+if(!stLink){stLink=buildStoreLink(la,lo);document.getElementById('nStoreLink').value=stLink;}
+const arr=getEmp();
+if(arr.some(x=>x.id.toLowerCase()===id.toLowerCase())){return alert('❌ This ID "'+id+'" already exists! Please type a different unique ID manually. (Use ↻ Suggest for an idea)');}
+arr.push({name:n,id,pass:p,desg:d,mob:m,store:st,storeArea:stArea,storeLat:la,storeLon:lo,storeLink:stLink,created:todayStr(),mustChangePass:true});setEmp(arr);
+alert('✅ ID created (Manual ID)!\nShare with Employee:\nID: '+id+'\nPassword: '+p+' (preset MAIPL@001 — change on first login is compulsory)\nStore: '+st+(stArea?' ('+stArea+')':'')+'\nLat/Lon: '+la+', '+lo);
+['nName','nId','nDesg','nMob','nStore','nStoreArea','nStoreLat','nStoreLon','nStoreLink'].forEach(i=>document.getElementById(i).value='');
+document.getElementById('nPass').value=DEFAULT_EMP_PASS;
+renderEmpTable();renderStoreAreas();updateStats();}
+// delEmp = PERMANENT delete: the ID is removed everywhere (All Employees, Store Areas, filters, stats)
+// ONLY old rows in the attendance records table (admTable) are kept — for audit, nowhere else
+function delEmp(id){if(!confirm('Delete Employee '+id+' permanently?\n(The ID will be removed everywhere — old attendance rows will remain ONLY in the records table)'))return;setEmp(getEmp().filter(x=>x.id!==id));const fe=document.getElementById('fEmp');if(fe&&fe.value===id)fe.value='';renderEmpTable();renderStoreAreas();renderAdminTable();updateStats();}
+function renderEmpTable(){
+const tb=document.querySelector('#empTable tbody');tb.innerHTML='';
+getEmp().forEach(e=>{const sName=e.store||'-';const sArea=e.storeArea||'-';const sLink=e.storeLink?`<a class="maplink" target="_blank" href="${e.storeLink}">🗺 Open Link</a>`:'-';const c=getStoreCoords(e);const latLon=c?(c.lat+',<br>'+c.lon):'-';tb.innerHTML+=`<tr><td><b>${e.id}</b></td><td>${e.name}</td><td>${e.pass}</td><td>${e.desg||'-'}</td><td>${e.mob||'-'}</td><td><b>${sName}</b></td><td>${sArea}</td><td style="font-size:12px">${latLon}</td><td>${sLink}</td><td><button class="btn btn-red btn-small" onclick="delEmp('${e.id}')">Delete</button></td></tr>`;});
+const f=document.getElementById('fEmp');const cur=f.value;
+f.innerHTML='<option value="">All Employees</option>'+getEmp().map(e=>`<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');f.value=cur;}
+// STEP 6B: Store Areas section — auto-grouped from employee Stores (Name + Lat/Lon + Link + count)
+function renderStoreAreas(){
+const tb=document.querySelector('#storeTable tbody');if(!tb)return;tb.innerHTML='';
+const map={};
+getEmp().forEach(e=>{
+  const key=(e.store||'Unknown').trim()||'Unknown';
+  const c=getStoreCoords(e);
+  if(!map[key])map[key]={name:key,areas:[],lat:c?c.lat:'-',lon:c?c.lon:'-',link:e.storeLink||'',count:0,ids:[]};
+  map[key].count++;
+  map[key].ids.push(e.id);
+  const ar=(e.storeArea||'').trim();
+  if(ar&&!map[key].areas.includes(ar))map[key].areas.push(ar);
+  if(map[key].lat==='-'&&c){map[key].lat=c.lat;map[key].lon=c.lon;}
+  if(!map[key].link&&e.storeLink)map[key].link=e.storeLink;
+});
+const keys=Object.keys(map).sort();
+if(!keys.length){tb.innerHTML='<tr><td colspan="6" style="color:#64748b">No stores yet — add a Store via Create Employee.</td></tr>';return;}
+keys.forEach(k=>{const s=map[k];
+  const linkHtml=s.link?`<a class="maplink" target="_blank" href="${s.link}">🗺 Open</a>`:'-';
+  tb.innerHTML+=`<tr><td><b>${s.name}</b></td><td>${s.areas.length?s.areas.join(', '):'-'}</td><td>${s.lat}</td><td>${s.lon}</td><td>${linkHtml}</td><td><b>${s.count}</b> (${s.ids.join(', ')})</td></tr>`;});
+}
+function updateStats(){
+const emps=getEmp(),recs=getRec(),t=todayStr();
+const empIds=new Set(emps.map(e=>e.id));
+// Records of deleted IDs are NOT counted in stats — shown only in the table
+const todayRecs=recs.filter(r=>r.date===t&&recType(r)==='Duty'&&empIds.has(r.empId));
+const todaySC=recs.filter(r=>r.date===t&&recType(r)==='StoreClose'&&empIds.has(r.empId)).length;
+let full=0,half=0;
+todayRecs.forEach(r=>{const s=getStatus(r);if(s.label==='Present')full++;else if(s.label==='Half Day')half++;});
+document.getElementById('stEmp').textContent=emps.length;
+document.getElementById('stRec').textContent=recs.length;
+document.getElementById('stToday').textContent=full;
+const sh=document.getElementById('stHalf');if(sh)sh.textContent=half;
+document.getElementById('stAbs').textContent=isSundayStr(t)?'—':Math.max(0,emps.length-todayRecs.length-todaySC);}
+// STEP 6C: Triple-click stats -> employee list (Name & ID only)
+let statClicks={}, statTimer=null;
+function statTriple(type){
+  const now=Date.now();
+  if(!statClicks[type]||now-statClicks[type].first>900){statClicks[type]={count:1,first:now};}
+  else{statClicks[type].count++;}
+  clearTimeout(statTimer);
+  statTimer=setTimeout(()=>{statClicks[type]={count:0,first:0};},950);
+  if(statClicks[type].count>=3){statClicks[type]={count:0,first:0};showStatList(type);}
+}
+function closeStatList(){document.getElementById('statListModal').classList.add('hidden');}
+function showStatList(type){
+  const emps=getEmp(), recs=getRec(), t=todayStr();
+  const todayDuty=recs.filter(r=>r.date===t&&recType(r)==='Duty');
+  let list=[], title='', sub='';
+  if(type==='emp'){list=emps.map(e=>({name:e.name,id:e.id}));title='👥 Total Employees';sub=list.length+' employees';}
+  else if(type==='present'){const ids=new Set();todayDuty.forEach(r=>{if(getStatus(r).label==='Present')ids.add(r.empId);});list=emps.filter(e=>ids.has(e.id)).map(e=>({name:e.name,id:e.id}));title='🟢 Present Today (Full Day)';sub='Triple-click list • '+list.length+' employees';}
+  else if(type==='half'){const ids=new Set();todayDuty.forEach(r=>{if(getStatus(r).label==='Half Day')ids.add(r.empId);});list=emps.filter(e=>ids.has(e.id)).map(e=>({name:e.name,id:e.id}));title='🟠 Half Day Today';sub='Triple-click list • '+list.length+' employees';}
+  else if(type==='records'){const ids=new Set(recs.map(r=>r.empId));list=emps.filter(e=>ids.has(e.id)).map(e=>({name:e.name,id:e.id}));title='📊 Total Records — Employees';sub='Employees having any record • '+list.length+' employees';}
+  else if(type==='absent'){
+    if(isSundayStr(t)){list=[];title='🔴 Absent Today';sub='Sunday — absence is not counted';}
+    else{const marked=new Set(recs.filter(r=>r.date===t).map(r=>r.empId));list=emps.filter(e=>!marked.has(e.id)).map(e=>({name:e.name,id:e.id}));title='🔴 Absent Today';sub='Triple-click list • '+list.length+' employees';}
+  }
+  document.getElementById('statListTitle').textContent=title;
+  document.getElementById('statListSub').textContent=sub;
+  const tb=document.querySelector('#statListTable tbody');tb.innerHTML='';
+  if(!list.length){tb.innerHTML='<tr><td colspan="3" style="color:#64748b">No employees in this category.</td></tr>';}
+  else{list.forEach((e,i)=>{tb.innerHTML+=`<tr><td>${i+1}</td><td>${e.name}</td><td><b>${e.id}</b></td></tr>`;});}
+  document.getElementById('statListModal').classList.remove('hidden');
+}
+
+// ------------------------------------------------------------
+// JS STEP 7: CAMERA — FRONT ONLY + NO UPLOAD (preview + submit flow)
+// RULE: Only the front (selfie) camera is allowed, the back camera is never tried. There is no gallery/file-upload option (❌ Not Allowed).
+// startCam() = FRONT camera on (prefers exact:'user', falls back to ideal:'user') | capturePhoto() = preview only | submitPhoto() = confirm
+// RULE: No punch without Submit (photoData stays empty)
+// NOTE: HTTPS/localhost + camera permission required
+// ------------------------------------------------------------
+async function startCam(){try{
+if(stream)stream.getTracks().forEach(t=>t.stop());
+try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'user'}},audio:false});}
+catch(e2){stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});}
+const v=document.getElementById('cam');v.srcObject=stream;v.classList.remove('hidden');
+document.getElementById('previewImg').classList.add('hidden');
+const st=document.getElementById('photoStatus');if(st)st.innerHTML='🤳 <b>Front camera ON</b> — Gallery/upload is not allowed ❌<br>Now press 📸 Take Photo (Preview).';}
+catch(e){alert('❌ Front camera failed to open: '+e.message+'\n(Front/selfie camera required — back camera or upload is not allowed ❌)\nPlease open on HTTPS or localhost and allow Camera access');}}
+function capturePhoto(){
+const v=document.getElementById('cam');
+if(!v.srcObject) return alert('Please start the camera first');
+const c=document.createElement('canvas');c.width=v.videoWidth||640;c.height=v.videoHeight||480;
+c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+pendingPhoto=c.toDataURL('image/jpeg',0.6);
+const im=document.getElementById('previewImg');im.src=pendingPhoto;im.classList.remove('hidden');v.classList.add('hidden');
+const sb=document.getElementById('submitPhotoBtn');if(sb)sb.classList.remove('hidden');
+const st=document.getElementById('photoStatus');if(st)st.innerHTML='👀 <b>Preview:</b> if you like the photo, press <b>✅ Submit Photo</b> below. Otherwise 🔄 Retake.';
+}
+function submitPhoto(){
+if(!pendingPhoto) return alert('❌ Please 📸 Take Photo (Preview) first!');
+photoData=pendingPhoto;pendingPhoto='';
+const sb=document.getElementById('submitPhotoBtn');if(sb)sb.classList.add('hidden');
+const st=document.getElementById('photoStatus');if(st)st.innerHTML='✅ <b>Photo submitted!</b> Now you can Punch (IN / OUT / Store Close).';
+alert('✅ Photo submitted! Now please Punch.');}
+function retake(){photoData='';pendingPhoto='';document.getElementById('previewImg').classList.add('hidden');document.getElementById('cam').classList.remove('hidden');const sb=document.getElementById('submitPhotoBtn');if(sb)sb.classList.add('hidden');const st=document.getElementById('photoStatus');if(st)st.innerHTML='📷 Front camera only — Gallery/upload is not allowed ❌<br>Step 1: Start Front Camera → Step 2: Take Photo (preview) → Step 3: Submit ✅';}
+
+// ------------------------------------------------------------
+// JS STEP 8: LIVE LOCATION + 50m GEOFENCE (store range check)
+// GEO_MAX_M = 50 meter | distMeters() = haversine distance
+// checkGeofence() = locData vs getStoreCoords(curEmp) -> {ok, dist, store}
+// getLocation() = lat/lon/accuracy -> locData + locBox + store distance + in/out range badge
+// RULE: IN/OUT/StoreClose only within 50m, outside = BLOCK + Absent
+// ------------------------------------------------------------
+const GEO_MAX_M=50;
+function distMeters(lat1,lon1,lat2,lon2){
+  try{
+    const R=6371000, toR=x=>x*Math.PI/180;
+    const dLa=toR(lat2-lat1), dLo=toR(lon2-lon1);
+    const a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(toR(lat1))*Math.cos(toR(lat2))*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return Math.round(2*R*Math.asin(Math.sqrt(a)));
+  }catch(e){return 999999;}
+}
+function checkGeofence(){
+  const store=getStoreCoords(curEmp);
+  if(!store) return {ok:false,dist:-1,reason:'store-missing'};
+  if(!locData||!locData.lat||!locData.lon) return {ok:false,dist:-1,reason:'loc-missing'};
+  const d=distMeters(parseFloat(locData.lat),parseFloat(locData.lon),store.lat,store.lon);
+  return {ok:d<=GEO_MAX_M,dist:d,store:store};
+}
+function getLocation(){
+const box=document.getElementById('locBox');box.innerHTML='⏳ Fetching location...';
+if(!navigator.geolocation){box.innerHTML='❌ Location is not supported in this browser';return;}
+navigator.geolocation.getCurrentPosition(p=>{
+locData={lat:p.coords.latitude.toFixed(6),lon:p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy)};
+let extra='';
+try{
+  const g=checkGeofence();
+  if(g.reason==='store-missing'){extra='<br>⚠️ Store location is not set — please contact Admin.';}
+  else if(g.dist>=0){extra='<br>🏬 Distance from Store: <b>'+g.dist+'m</b> '+(g.ok?'✅ <b style="color:#059669">In Range (50m)</b>':'❌ <b style="color:#dc2626">Out of Range (beyond 50m — punch BLOCKED, Absent)</b>');}
+}catch(e){}
+box.innerHTML=`✅ <b>Location captured</b><br>Lat: ${locData.lat}, Lon: ${locData.lon}<br>Accuracy: ±${locData.acc}m${extra}<br><a class="maplink" target="_blank" href="https://maps.google.com/?q=${locData.lat},${locData.lon}">🗺 View on Map</a><br>⏰ ${new Date().toLocaleString('en-IN')}`;},
+e=>{box.innerHTML='❌ Location Error: '+e.message+'<br>Please turn ON Location and press Allow.';},{enableHighAccuracy:true,timeout:15000});}
+
+// ------------------------------------------------------------
+// JS STEP 9: ATTENDANCE PUNCH — 4 STATUS + 50m GEOFENCE (NO admin holiday, NO back-date)
+// 1️⃣ IN (On Arrival): photo+loc required + within 50m, 10AM–1PM, Sunday block (outside = BLOCK + Absent)
+// 2️⃣ OUT (On Departure): IN required + within 50m, until 11:59:50PM, <6PM = Half Day (outside = BLOCK + Absent)
+// 3️⃣ STORECLOSE: marked by the employee (photo+loc required + within 50m), blocked on Sunday
+// 4️⃣ WEEKOFF: Sunday AUTO + MANUAL on any day (by the employee), photo/loc NOT required
+// LOC: IN/OUT/StoreClose me lat/lon + Via Link + distM save | workHrs() = IN-OUT diff
+// ------------------------------------------------------------
+function punch(type){
+const now=new Date(), d=todayStr(), t=timeStr(now), nowSec=secsOfNow(now);
+try{const fresh=getEmp().find(x=>x.id.toLowerCase()===String(curEmp.id).toLowerCase());if(fresh)curEmp=fresh;}catch(e){}
+let recs=getRec();let r=recs.find(x=>x.empId===curEmp.id&&x.date===d);
+const sun=isSundayStr(d);
+// ---- 4️⃣ WEEK OFF — MANUAL (employee kisi bhi din) + Sunday AUTO ----
+if(type==='WEEKOFF'){
+  if(r) {renderMyTable();updateTodayStatus();refreshEmpHolidayNotice();return alert('🌴 Week Off is already marked for today.');}
+  if(sun){
+    recs.push({empId:curEmp.id,name:curEmp.name,store:curEmp.store||'',storeArea:curEmp.storeArea||'',storeLink:curEmp.storeLink||'',date:d,type:'WeekOff',inTime:'',inPhoto:'',inLat:'',inLon:'',inLocLink:'',outTime:'',outPhoto:'',outLat:'',outLon:'',outLocLink:'',auto:true});
+    setRec(recs);renderMyTable();updateTodayStatus();refreshEmpHolidayNotice();
+    return alert('🌴 Week Off marked (Sunday Auto) ✅');
+  }
+  if(!confirm('🌴 Mark MANUAL Week Off for today ('+dayName(d)+')?\nIN/OUT will be closed for today after this.'))return;
+  recs.push({empId:curEmp.id,name:curEmp.name,store:curEmp.store||'',storeArea:curEmp.storeArea||'',storeLink:curEmp.storeLink||'',date:d,type:'WeekOff',inTime:'',inPhoto:'',inLat:'',inLon:'',inLocLink:'',outTime:'',outPhoto:'',outLat:'',outLon:'',outLocLink:'',auto:false,manual:true});
+  setRec(recs);renderMyTable();updateTodayStatus();refreshEmpHolidayNotice();
+  return alert('🌴 Week Off marked (Manual) ✅');
+}
+// ---- On Sunday IN/OUT/StoreClose are all closed (WeekOff auto) ----
+if(sun) return alert('🌴 Today is Sunday — automatic Week Off ✅\nIN / OUT / Store Close are not allowed.');
+// ---- 3️⃣ STORE CLOSE (employee-side + 50m check) ----
+if(type==='STORECLOSE'){
+  if(r) return alert('❌ Today\'s record already exists ('+getStatus(r).label+') — Store Close cannot be marked again.');
+  if(!photoData) return alert('❌ First 📸 Take Photo → 👀 Preview → ✅ Submit Photo! (Store Close proof)');
+  if(!locData) return alert('❌ Please capture 📍 location first! (Store Close proof)');
+  const gf=checkGeofence();
+  if(gf.reason==='store-missing') return alert('⚠️ Store location is not set by Admin! Please contact Admin.');
+  if(!gf.ok) return alert('⛔ You are outside the Store! Distance: '+gf.dist+'m (must be within 50m).\nStore Close BLOCKED — status Absent ❌\nGo near the Store and press Get Location again.');
+  const link=locLinkOf(locData.lat,locData.lon);
+  recs.push({empId:curEmp.id,name:curEmp.name,store:curEmp.store||'',storeArea:curEmp.storeArea||'',storeLink:curEmp.storeLink||'',date:d,type:'StoreClose',inTime:t,inPhoto:photoData,inLat:locData.lat,inLon:locData.lon,inLocLink:link,inDistM:gf.dist,outTime:'',outPhoto:'',outLat:'',outLon:'',outLocLink:''});
+  setRec(recs);photoData='';retake();renderMyTable();updateTodayStatus();refreshEmpHolidayNotice();
+  return alert('🏬 Store Close marked ✅ ('+gf.dist+'m)\n⏰ '+t+'\n📍 '+link);
+}
+// ---- 1️⃣ IN / 2️⃣ OUT (Duty + 50m check) ----
+if(!photoData) return alert('❌ First 📸 Take Photo → 👀 Preview → ✅ Submit Photo!');
+if(!locData) return alert('❌ Please capture 📍 location first!');
+const gfAll=checkGeofence();
+if(gfAll.reason==='store-missing') return alert('⚠️ Store location is not set by Admin! Please contact Admin.');
+if(!gfAll.ok) return alert('⛔ You are outside the Store! Distance: '+gfAll.dist+'m (must be within 50m).\nPunch IN/OUT BLOCKED — status Absent ❌\nGo near the Store and press 📍 Get Location again.');
+const inLink=locLinkOf(locData.lat,locData.lon);
+if(type==='IN'){
+// STEP 9A: No back-date (today only) — no date picker, todayStr() is the key
+// STEP 9C: IN time window 10AM–1PM + 50m geofence
+if(nowSec<IN_START_SEC||nowSec>IN_END_SEC) return alert('⛔ Check-IN is allowed only between 10:00 AM – 1:00 PM!\nCurrent time: '+t+'\n'+(nowSec<IN_START_SEC?'It is not 10 AM yet.':'The 1 PM window has passed.'));
+if(r) return alert(r.type&&r.type!=='Duty'?("Today's record already exists ("+getStatus(r).label+")"):("Today's IN is already done: "+r.inTime));
+recs.push({empId:curEmp.id,name:curEmp.name,store:curEmp.store||'',storeArea:curEmp.storeArea||'',storeLink:curEmp.storeLink||'',date:d,type:'Duty',inTime:t,inPhoto:photoData,inLat:locData.lat,inLon:locData.lon,inLocLink:inLink,inDistM:gfAll.dist,outTime:'',outPhoto:'',outLat:'',outLon:'',outLocLink:''});
+alert('✅ Attendance IN successful! ('+gfAll.dist+'m)\n⏰ '+t+'\n📍 '+inLink);}
+else{
+// STEP 9D: OUT — IN compulsory + 50m geofence + deadline 11:59:50 PM
+if(!r) return alert('❌ Please do IN first, then OUT (back-date OUT is not allowed)');
+if(recType(r)!=='Duty') return alert('❌ No Duty record for today ('+getStatus(r).label+') — OUT is not allowed.');
+if(r.outTime) return alert("Today's OUT is already done: "+r.outTime);
+if(nowSec>OUT_DEADLINE_SEC) return alert('⛔ Check-OUT time is over!\nOUT is allowed only until 11:59:50 PM.\nCurrent time: '+t);
+const outLink=locLinkOf(locData.lat,locData.lon);
+r.outTime=t;r.outPhoto=photoData;r.outLat=locData.lat;r.outLon=locData.lon;r.outLocLink=outLink;r.outDistM=gfAll.dist;
+const s=getStatus(r);
+alert('✅ Attendance OUT successful! ('+gfAll.dist+'m)\n⏰ '+t+'\nTotal hours: '+workHrs(r)+'\nStatus: '+s.label+(s.label==='Half Day'?' 🟠 (OUT before 6 PM = Half Day)':' 🟢'));}
+setRec(recs);photoData='';retake();renderMyTable();updateTodayStatus();refreshEmpHolidayNotice();}
+function workHrs(r){if(!r.outTime)return '-';try{
+const p=s=>{const m=s.match(/(\d+):(\d+):(\d+)\s*(AM|PM)?/i);if(!m)return 0;let[h,mi,s2]=[+m[1],+m[2],+m[3]];const ap=(m[4]||'').toUpperCase();if(ap.startsWith('P')){if(h<12)h+=12;}if(ap.startsWith('A')){if(h===12)h=0;}return h*3600+mi*60+s2;};
+let d=p(r.outTime)-p(r.inTime);if(d<0)d+=86400;const h=Math.floor(d/3600),m=Math.floor(d%3600/60);return h+'h '+m+'m';}catch(e){return '-';}}
+
+// ------------------------------------------------------------
+// JS STEP 10: TABLES (employee month-wise + admin every-month)
+// renderMyTable() = login employee ke records, myMonth filter (default=current month)
+//   + Day column + mySummary (Present/Half/IN Only/StoreClose/WeekOff/Absent)
+//   + resetMyMonth() = back to current month (new-month auto reset view)
+// renderAdminTable() = all records, fMonth+fDate+fEmp+fSearch filters (Admin keeps every month's data)
+// clearAdminFilters() | zoom()/zoomSrc() = photo preview
+// ------------------------------------------------------------
+function resetMyMonth(){const mm=document.getElementById('myMonth');if(mm)mm.value=curMonthStr();renderMyTable();}
+function renderMyTable(){
+const tb=document.querySelector('#myTable tbody');tb.innerHTML='';
+const mmEl=document.getElementById('myMonth');
+let ym=mmEl&&mmEl.value?mmEl.value:curMonthStr();
+if(mmEl&&!mmEl.value)mmEl.value=ym;
+const all=getRec().filter(r=>r.empId===curEmp.id&&monthStr(r.date)===ym).sort((a,b)=>b.date.localeCompare(a.date));
+all.forEach(r=>{
+const inL=r.inLocLink||locLinkOf(r.inLat,r.inLon);
+const outL=r.outLocLink||locLinkOf(r.outLat,r.outLon);
+const isOff=recType(r)!=='Duty';
+tb.innerHTML+=`<tr><td>${fmtDate(r.date)}</td><td>${dayName(r.date)}</td><td>${r.inTime||'—'}</td><td>${r.inPhoto?`<img src="${r.inPhoto}" onclick="zoomSrc(this)">`:'—'}</td><td>${r.inLat?`<a class="maplink" target="_blank" href="${inL}">${r.inLat},${r.inLon}<br>🗺 Via Link</a>`:'—'}</td><td>${r.outTime||'—'}</td><td>${r.outPhoto?`<img src="${r.outPhoto}" onclick="zoomSrc(this)">`:'—'}</td><td>${r.outLat?`<a class="maplink" target="_blank" href="${outL}">${r.outLat},${r.outLon}<br>🗺 Via Link</a>`:'—'}</td><td>${isOff?'—':workHrs(r)}</td><td>${statusBadge(r)}</td></tr>`;});
+// STEP 10A: Month summary (date-wise status count + Absent calc: Sundays minus, StoreClose/WeekOff minus)
+let p=0,h=0,io=0,sc=0,wo=0;
+all.forEach(r=>{const s=getStatus(r).label;if(s==='Present')p++;else if(s==='Half Day')h++;else if(s==='IN Only')io++;else if(s==='Store Close')sc++;else if(s==='Week Off')wo++;});
+let absent='—';
+try{
+  const [yy,mmo]=ym.split('-').map(Number);
+  const dim=new Date(yy,mmo,0).getDate();
+  const isCur=ym===curMonthStr();
+  const limit=isCur?new Date().getDate():dim;
+  let expected=0;
+  for(let dd=1;dd<=limit;dd++){const ds=ym+'-'+String(dd).padStart(2,'0');if(!isSundayStr(ds))expected++;}
+  const dutyMarked=p+h+io+sc;
+  absent=Math.max(0,expected-dutyMarked);
+}catch(e){}
+const box=document.getElementById('mySummary');
+if(box)box.innerHTML=`📅 <b>${ym}</b> — Present: <b>${p}</b> | Half Day: <b>${h}</b> | IN Only: <b>${io}</b> | 🏬 Store Close: <b>${sc}</b> | 🌴 Week Off: <b>${wo}</b> | Absent*: <b>${absent}</b><br><span style="font-size:12px;color:#64748b">*Absent = duty days (Sundays excluded) with no record. In a new month this view auto-resets (empty) — old data stays safe with Admin.</span>`;
+if(!all.length)tb.innerHTML='<tr><td colspan="10" style="color:#64748b">No records in this month (reset view in a new month).</td></tr>';}
+function clearAdminFilters(){['fMonth','fDate','fSearch'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});const fe=document.getElementById('fEmp');if(fe)fe.value='';renderAdminTable();}
+function renderAdminTable(){
+const fm=document.getElementById('fMonth').value, fd=document.getElementById('fDate').value, fe=document.getElementById('fEmp').value, fs=document.getElementById('fSearch').value.toLowerCase();
+const tb=document.querySelector('#admTable tbody');tb.innerHTML='';
+const empMap={};getEmp().forEach(e=>{empMap[e.id]=e;});
+getRec().filter(r=>(!fm||monthStr(r.date)===fm)&&(!fd||r.date===fd)&&(!fe||r.empId===fe)&&(!fs||r.name.toLowerCase().includes(fs)||r.empId.toLowerCase().includes(fs)||(r.store||'').toLowerCase().includes(fs)||(r.storeArea||'').toLowerCase().includes(fs)))
+.sort((a,b)=>(b.date+b.inTime).localeCompare(a.date+a.inTime)).forEach((r,i)=>{
+const inL=r.inLocLink||locLinkOf(r.inLat,r.inLon);
+const outL=r.outLocLink||locLinkOf(r.outLat,r.outLon);
+const storeName=r.store||(empMap[r.empId]&&empMap[r.empId].store)||'-';
+const storeArea=r.storeArea||(empMap[r.empId]&&empMap[r.empId].storeArea)||'-';
+const storeLink=r.storeLink||(empMap[r.empId]&&empMap[r.empId].storeLink)||'';
+const storeLinkHtml=storeLink?`<a class="maplink" target="_blank" href="${storeLink}">🗺 Open</a>`:'—';
+const isOff=recType(r)!=='Duty';
+const delTag=empMap[r.empId]?'':' <span class="badge grey">Deleted</span>';
+tb.innerHTML+=`<tr><td><b>${r.empId}</b></td><td>${r.name}${delTag}</td><td><b>${storeName}</b></td><td>${storeArea}</td><td>${storeLinkHtml}</td><td>${fmtDate(r.date)}</td><td>${r.inTime||'—'}</td><td>${r.inPhoto?`<img src="${r.inPhoto}" onclick="zoomSrc(this)">`:'—'}</td><td>${r.inLat?`<a class="maplink" target="_blank" href="${inL}">${r.inLat}<br>${r.inLon}<br>🗺 Via Link</a>`:'—'}</td><td>${r.outTime||'—'}</td><td>${r.outPhoto?`<img src="${r.outPhoto}" onclick="zoomSrc(this)">`:'—'}</td><td>${r.outLat?`<a class="maplink" target="_blank" href="${outL}">${r.outLat}<br>${r.outLon}<br>🗺 Via Link</a>`:'—'}</td><td>${isOff?'—':workHrs(r)}</td><td>${statusBadge(r)}</td></tr>`;});}
+function zoomSrc(el){document.getElementById('modalImg').src=el.src;document.getElementById('imgModal').classList.remove('hidden');}
+function zoom(s){document.getElementById('modalImg').src=s;document.getElementById('imgModal').classList.remove('hidden');}
+
+// ------------------------------------------------------------
+// JS STEP 11: EXPORT + DELETE (admin actions)
+// exportCSV() = records -> attendance_YYYY-MM-DD.csv download (Excel compatible)
+// clearRecords() = warning popup open | closeClearModal() = cancel
+// confirmClearRecords() = Yes pe saara record delete + tables/stats refresh
+// FUTURE: For a PDF/WhatsApp report, add a new export fn next to exportCSV()
+// ------------------------------------------------------------
+function exportCSV(){
+const recs=getRec();if(!recs.length)return alert('No records found');
+const empMap={};getEmp().forEach(e=>{empMap[e.id]=e;});
+let csv='EmpID,Name,StoreName,StoreArea,StoreLink,Date,Day,Type,InTime,InLat,InLon,InLocLink,OutTime,OutLat,OutLon,OutLocLink,WorkHours,Status\n';
+recs.forEach(r=>{
+const sn=(r.store||(empMap[r.empId]&&empMap[r.empId].store)||'').replace(/"/g,'""');
+const sa=(r.storeArea||(empMap[r.empId]&&empMap[r.empId].storeArea)||'').replace(/"/g,'""');
+const sl=(r.storeLink||(empMap[r.empId]&&empMap[r.empId].storeLink)||'').replace(/"/g,'""');
+const inL=(r.inLocLink||locLinkOf(r.inLat,r.inLon)||'').replace(/"/g,'""');
+const outL=(r.outLocLink||locLinkOf(r.outLat,r.outLon)||'').replace(/"/g,'""');
+const tp=recType(r);
+const wh=tp!=='Duty'?'—':workHrs(r);
+csv+=`${r.empId},"${r.name}","${sn}","${sa}","${sl}",${r.date},${dayName(r.date)},${tp},${r.inTime||''},${r.inLat||''},${r.inLon||''},"${inL}",${r.outTime||''},${r.outLat||''},${r.outLon||''},"${outL}",${wh},${getStatus(r).label}\n`;});
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='attendance_'+todayStr()+'.csv';a.click();}
+function clearRecords(){document.getElementById('clearModal').classList.remove('hidden');}
+function closeClearModal(){document.getElementById('clearModal').classList.add('hidden');}
+function confirmClearRecords(){setRec([]);closeClearModal();renderAdminTable();updateStats();alert('All attendance data deleted');}
+// NOTE: Admin holiday mgmt (WeekOff/StoreClose CRUD) REMOVED — Sunday auto + employee-side marking only.
+// STEP 12A: Enter Key support — Enter on any input = OK/Login/Proceed (native click when a button is focused)
+// empId/empPass>employeeLogin | admId>admNextToHuman | captchaAns>admVerifyHuman | admPass>adminLogin
+// forgot/reset/settings/first-login inputs trigger their respective submit | only when the modal/step is visible
+function isVisible(id){const el=document.getElementById(id);return el&&!el.classList.contains('hidden');}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter')return;
+  const t=e.target||{};
+  if(t.tagName==='BUTTON'||t.tagName==='TEXTAREA')return;
+  if(t.tagName==='SELECT'){return;}
+  const id=t.id||'';
+  const prevent=()=>{e.preventDefault();};
+  // Priority: topmost open modal first
+  if(isVisible('firstLoginModal')&&(id==='firstNewPass'||id==='firstConfPass')){prevent();firstLoginChange();return;}
+  if(isVisible('empForgotModal')&&['eForgotId','eForgotMob','eForgotNewPass','eForgotConfPass'].includes(id)){prevent();resetEmpPassword();return;}
+  if(isVisible('empSettingsModal')&&['sEmpCurPass','sEmpNewPass','sEmpConfPass'].includes(id)){prevent();empChangePassword();return;}
+  if(isVisible('forgotModal')&&['fAdmId','fAdmMob','fAdmMovie','fAdmBirth','fAdmSchool','fAdmNewPass','fAdmConfPass'].includes(id)){prevent();resetAdminPassword();return;}
+  if(isVisible('clearModal')){return;}
+  if(isVisible('statListModal')){prevent();closeStatList();return;}
+  // Login sections (only when login visible) — step-based: Enter anywhere proceeds with the current step
+  if(isVisible('loginSection')){
+    if(!document.getElementById('empLogin').classList.contains('hidden')&&(id==='empId'||id==='empPass')){prevent();employeeLogin();return;}
+    if(!document.getElementById('admLogin').classList.contains('hidden')){
+      if(id==='admId'&&isVisible('admStep1')){prevent();admNextToHuman();return;}
+      if((id==='captchaAns'||id==='humanChk')&&isVisible('admStep2')){prevent();admVerifyHuman();return;}
+      if(id==='admPass'&&isVisible('admStep4')){prevent();adminLogin();return;}
+      // Fallback: if focus is on any input/body, proceed as per the visible step
+      if(isVisible('admStep4')){prevent();adminLogin();return;}
+      if(isVisible('admStep2')){prevent();admVerifyHuman();return;}
+      if(isVisible('admStep1')){prevent();admNextToHuman();return;}
+    }
+  }
+});
+// STEP 12B: Init (captcha ready + refresh-proof session restore)
+refreshCaptcha();
+tryRestoreSession();
+</script>
+</body>
+</html>
