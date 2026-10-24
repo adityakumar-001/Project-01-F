@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Organizer Portal - Get-Attended Pro</title>
+<link rel="icon" type="image/png" href="Logo/LOGO.png">
+<meta name="theme-color" content="#0b1226">
+<meta name="description" content="Get-Attended Organizer Portal - Only Admins control. No employee details.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0b1226;--indigo:#4f46e5;--blue:#2563eb;--cyan:#06b6d4;--emerald:#059669;--amber:#f59e0b;--rose:#e11d48;--bg:#eef2ff;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--shadow:0 20px 50px -12px rgba(15,23,42,.22);--r:18px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter','Plus Jakarta Sans','Segoe UI',Arial,sans-serif}
+html,body{width:100%;max-width:100%;min-height:100vh;min-height:100dvh;overflow-x:hidden}
+body{background:#0b1226;background-image:radial-gradient(1100px 550px at 5% -10%,#7c3aed 0%,transparent 60%),radial-gradient(900px 500px at 95% 0%,#06b6d4 0%,transparent 55%),radial-gradient(800px 600px at 50% 110%,#1e1b4b 0%,transparent 60%);background-attachment:fixed;color:var(--text)}
+.app{display:flex;min-height:100vh;min-height:100dvh;width:100%}
+.sidebar{width:264px;flex-shrink:0;position:sticky;top:0;height:100vh;background:rgba(11,18,38,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-right:1px solid rgba(255,255,255,.12);color:#e2e8f0;display:flex;flex-direction:column;padding:20px 14px;z-index:300}
+.side-brand{display:flex;align-items:center;gap:12px;padding:6px 8px 16px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:14px}
+.side-brand img{width:46px;height:46px;border-radius:50%;background:#fff;object-fit:cover;border:2px solid #fff}
+.side-brand h1{font-size:18px;font-weight:800;color:#fff}
+.side-brand p{font-size:11px;color:#c4b5fd;font-weight:600}
+.side-nav{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.side-link{text-align:left;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#e0e7ff;font-weight:700;font-size:14px;padding:11px 14px;border-radius:12px;cursor:pointer}
+.side-link:hover{background:rgba(255,255,255,.14)}
+.side-link.active{background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 8px 22px rgba(124,58,237,.45);color:#fff;border-color:transparent}
+.side-foot{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);font-size:11.5px;color:#7d8db0;font-weight:600}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.topbar h2{font-size:19px;font-weight:800}
+.topbar p{font-size:12px;color:var(--muted);font-weight:600}
+.top-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.menu-btn{display:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;font-size:14px;font-weight:700;cursor:pointer}
+#hdrUser{background:#f5f3ff;border:1px solid #c4b5fd;color:#4c1d95;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#hdrUser:empty{display:none}
+#sesLeft{background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:6px 12px;border-radius:999px;font-weight:700;font-size:12px}
+#sesLeft:empty{display:none}
+.sync-badge{font-size:12px;font-weight:800;background:#64748b;color:#fff;padding:7px 13px;border-radius:999px;white-space:nowrap}
+.sync-badge.cloud{background:linear-gradient(135deg,#059669,#10b981)}
+.content{padding:22px;max-width:1180px;width:100%;margin:0 auto}
+.card{background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:24px;margin-bottom:20px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#7c3aed,#4f46e5,#06b6d4,#059669)}
+.card h2{font-size:19px;font-weight:800;margin-bottom:6px}
+.hidden{display:none!important}
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:6px}
+.stat{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border-radius:16px;padding:16px;text-align:center;box-shadow:0 12px 28px -8px rgba(124,58,237,.5);border:1px solid rgba(255,255,255,.2)}
+.stat.g{background:linear-gradient(135deg,#059669,#10b981)}
+.stat.r{background:linear-gradient(135deg,#dc2626,#f43f5e)}
+.stat h2{font-size:28px;font-weight:800}
+.stat p{font-size:12.5px;font-weight:600;opacity:.95}
+label{font-size:12px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#334155;display:block;margin:14px 0 6px}
+input,select{width:100%;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;font-size:15px;outline:none}
+input:focus{border-color:#7c3aed;background:#fff;box-shadow:0 0 0 4px rgba(124,58,237,.16)}
+.pass-wrap{position:relative}.pass-wrap input{padding-right:70px}
+.eye-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:#f5f3ff;border-radius:10px;padding:6px 10px;min-width:56px;cursor:pointer;font-size:12px;font-weight:700}
+.btn{width:100%;padding:13px 16px;border:none;border-radius:12px;font-size:14.5px;font-weight:800;cursor:pointer;margin-top:14px;border:1px solid rgba(255,255,255,.25);transition:.2s}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+.btn-blue{background:linear-gradient(135deg,#7c3aed,#4f46e5 60%,#2563eb);color:#fff}
+.btn-green{background:linear-gradient(135deg,#059669,#10b981);color:#fff}
+.btn-red{background:linear-gradient(135deg,#e11d48,#dc2626);color:#fff}
+.btn-orange{background:linear-gradient(135deg,#ea580c,#f59e0b);color:#fff}
+.btn-grey{background:linear-gradient(135deg,#475569,#64748b);color:#fff}
+.btn-small{width:auto;padding:9px 16px;font-size:13px;border-radius:999px;margin:4px 4px 0 0;display:inline-block}
+#logoutBtn{background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:999px;padding:8px 18px;margin-top:0;font-size:13px;color:#fff;border:1px solid rgba(255,255,255,.25);cursor:pointer;font-weight:800}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.info{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-left:5px solid #7c3aed;padding:10px 14px;border-radius:12px;font-size:13.5px;margin-bottom:12px;line-height:1.55}
+.hint{font-size:12px;color:#64748b;margin-top:6px;line-height:1.5}
+.table-wrap{overflow-x:auto;border-radius:14px;margin-top:12px;border:1px solid #e2e8f0;background:#fff}
+table{width:100%;min-width:680px;border-collapse:collapse;font-size:13px}
+th,td{padding:11px 10px;text-align:center;white-space:nowrap;border-bottom:1px solid #f1f5f9}
+th{background:linear-gradient(180deg,#1e293b,#0f172a);color:#e2e8f0;font-size:11px;text-transform:uppercase;letter-spacing:.7px}
+tr:nth-child(even){background:#f8fafc}
+tbody tr:hover{background:#f5f3ff}
+.badge{padding:5px 12px;border-radius:999px;font-size:11px;font-weight:800;color:#fff;text-transform:uppercase}
+.enabled{background:linear-gradient(135deg,#059669,#10b981)}.disabled{background:linear-gradient(135deg,#dc2626,#f43f5e)}
+.modal{position:fixed;inset:0;background:rgba(11,18,38,.65);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:999;padding:15px}
+.modal-box{background:#fff;border-radius:16px;padding:24px;max-width:430px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal-btns{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.modal-btns .btn{flex:1 1 120px;width:auto;margin-top:0}
+.stepper{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+.stepper span{font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b}
+.stepper span.on{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border-color:transparent}
+.adm-step{border:2px solid #e2e8f0;border-radius:12px;padding:14px;margin-top:10px;background:#f8fafc}
+.adm-step.done{border-color:#059669;background:#f0fdf4}
+.captcha-box{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:21px;font-weight:800;text-align:center;border-radius:10px;padding:10px;letter-spacing:3px;margin:8px 0}
+.human-check{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid #cbd5e1;border-radius:10px;padding:10px;margin-top:8px;font-size:13px;font-weight:600;cursor:pointer}
+.human-check input{width:auto;transform:scale(1.4)}
+.forgot-link{display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:var(--blue);cursor:pointer;text-decoration:underline;background:none;border:none}
+body.logged-out .sidebar{display:none!important}
+body.logged-out [data-section]{display:none!important}
+@media(max-width:900px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-105%);transition:.25s}.sidebar.open{transform:none}.menu-btn{display:inline-block}.grid2{grid-template-columns:1fr}.content{padding:14px}.stat-cards{grid-template-columns:repeat(2,1fr)}}
+/* ===== 2026 UI polish: modern depth, motion and micro-interactions ===== */
+::selection{background:#7c3aed;color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#f5f3ff}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#7c3aed,#06b6d4);border-radius:99px}
+.card{transition:transform .25s ease,box-shadow .25s ease}
+.card:hover{box-shadow:0 28px 64px -18px rgba(15,23,42,.32)}
+.stat{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}
+.stat:hover{transform:translateY(-4px);filter:brightness(1.05);box-shadow:0 18px 36px -10px rgba(124,58,237,.55)}
+.side-link{position:relative;overflow:hidden;transition:background .2s ease,transform .2s ease}
+.side-link::after{content:'';position:absolute;left:-80%;top:0;width:50%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.22),transparent);transition:left .5s ease}
+.side-link:hover::after{left:130%}
+.btn{position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transition:left .55s ease;pointer-events:none}
+.btn:hover::after{left:140%}
+.modal-box{animation:orgPop .28s cubic-bezier(.34,1.56,.64,1)}
+@keyframes orgPop{from{transform:scale(.94) translateY(12px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+tbody tr{transition:background .15s ease,transform .15s ease}
+tbody tr:hover{transform:translateY(-1px)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}}
+</style>
+</head>
+<body class="logged-out">
+<div class="app">
+<aside class="sidebar" id="sidebar">
+<div class="side-brand"><img src="Logo/LOGO.png" alt="Logo" onerror="this.src='https://via.placeholder.com/52'"><div><h1>Get-Attended</h1><p>Organizer Console - Top Level</p></div></div>
+<nav class="side-nav">
+<button class="side-link active" data-nav="dashboard" onclick="showSection('dashboard')">Dashboard</button>
+<button class="side-link" data-nav="admins" onclick="showSection('admins')">Admins</button>
+<button class="side-link" data-nav="settings" onclick="showSection('settings')">Settings</button>
+</nav>
+<div class="side-foot">Organizer Console - v2026 - Admins Only</div>
+</aside>
+<div class="main">
+<div class="topbar"><button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">Menu</button><div><h2>Organizer Portal</h2><p>Admins Only - No Employee Details</p></div><div class="top-actions"><span id="syncBadge" class="sync-badge">This device only</span><span id="hdrUser"></span><span id="sesLeft"></span><button id="logoutBtn" class="hidden" onclick="logout()">Logout</button></div></div>
+<div class="content">
+<div id="loginSection" class="card">
+<h2>Organizer Login</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><span style="font-size:11px;font-weight:800;letter-spacing:1px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:7px 13px;border-radius:999px">ORGANIZER CONSOLE - TOP LEVEL</span></div>
+<div class="stepper"><span id="stp1" class="on">1 - ID</span><span id="stp2">2 - Human</span><span id="stp3">3 - Password</span></div>
+<div id="orgLogin">
+<div id="orgStep1" class="adm-step"><h4>Step 1: Organizer ID</h4><label>Organizer ID</label><input id="orgId" placeholder="organizer" autocomplete="username"><button class="btn btn-blue" type="button" onclick="orgNextToHuman()">Next - Human Verification</button></div>
+<div id="orgStep2" class="adm-step hidden"><h4>Step 2: Human Verification</h4><p style="font-size:13px">ID <b id="orgVerIdShow"></b> verified. Prove you are human:</p><div class="captcha-box" id="captchaQ">3 + 4 = ?</div><label>Captcha Answer *</label><input id="captchaAns" type="number" placeholder="e.g. 7"><label class="human-check"><input type="checkbox" id="humanChk"> I am human (not a robot)</label><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-grey" type="button" style="flex:1" onclick="orgBackToId()">Back</button><button class="btn btn-blue" type="button" style="flex:2" onclick="orgVerifyHuman()">Verify and Continue</button></div><div style="text-align:center"><button class="forgot-link" type="button" onclick="refreshCaptcha()">New Captcha</button></div></div>
+<div id="orgStep3" class="adm-step hidden"><h4>Step 3: Input Password</h4><label>Password</label><div class="pass-wrap"><input id="orgPass" type="password" placeholder="Organizer password"><button type="button" class="eye-btn" onclick="togglePass('orgPass',this)">Show</button></div><button class="btn btn-blue" type="button" onclick="organizerLogin()">Organizer Login</button><div style="text-align:center"><button class="forgot-link" onclick="openForgotModal()">Forgot Password? Reset via Security Questions</button></div><div style="text-align:center"><button class="forgot-link" style="color:#64748b" onclick="orgBackToId2()">Back</button></div></div>
+</div>
+</div>
+<div id="orgDash" class="hidden">
+<section data-section="dashboard"><div class="card"><h2>Dashboard - Admins Overview</h2><div class="info">The Organizer manages <b>only Admins</b>. Employee details are never shown here - only the Admin list. When an Admin is disabled, all Employees under that Admin are automatically blocked.</div><div class="stat-cards"><div class="stat"><h2 id="stTotal">0</h2><p>Total Admins</p></div><div class="stat g"><h2 id="stEnabled">0</h2><p>Enabled Admins</p></div><div class="stat r"><h2 id="stDisabled">0</h2><p>Disabled Admins</p></div></div></div></section>
+<section data-section="admins"><div class="card"><h2>Create New Admin ID</h2><div class="info">Each Admin ID is <b>separate and unique</b> - IDs never merge. Only the Organizer can create multiple Admins.</div><div class="grid2"><div><label>Admin Name *</label><input id="nAdminName" placeholder="e.g. Ramesh Admin"></div><div><label>Admin ID *</label><input id="nAdminId" placeholder="e.g. ADMIN001"></div><div><label>Password *</label><div class="pass-wrap"><input id="nAdminPass" type="password" value="Admin@124"><button type="button" class="eye-btn" onclick="togglePass('nAdminPass',this)">Show</button></div></div><div><label>Mobile</label><input id="nAdminMob" maxlength="10" placeholder="10-digit mobile"></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-blue" style="flex:3" onclick="createAdmin()">Create Admin ID</button><button class="btn btn-grey" style="flex:1" onclick="autofillAdminId(true)">Suggest ID</button></div></div><div class="card"><h2>All Admins - Edit / Enable / Disable / Delete</h2><div class="info"><b>Edit</b> updates name, ID, password and mobile. Passwords are never displayed. If you change the Admin ID, its Employees and records move to the new ID automatically. <b>Enable / Disable</b> controls login access (disabling an Admin also blocks all its Employees). <b>Delete</b> is separate - a warning popup appears before deletion.</div><div class="table-wrap"><table id="adminTable"><thead><tr><th>Admin ID</th><th>Name</th><th>Password</th><th>Mobile</th><th>Status</th><th>Created</th><th>Enable / Disable</th><th>Edit</th><th>Delete</th></tr></thead><tbody></tbody></table></div></div></section>
+<section data-section="settings"><div class="card"><h2>Change Organizer ID and Password</h2><div class="info">Current Organizer ID: <b id="curOrgIdShow">organizer</b> | Mobile: <b id="curOrgMobShow">-</b> | Security Questions: <b id="curOrgSecShow">-</b></div><div class="grid2"><div><label>Current Password *</label><div class="pass-wrap"><input id="cOrgCurPass" type="password" placeholder="Enter current password"><button type="button" class="eye-btn" onclick="togglePass('cOrgCurPass',this)">Show</button></div></div><div><label>New Organizer ID *</label><input id="cOrgId" placeholder="e.g. organizer"></div><div><label>Q1: Organizer Mobile *</label><input id="cOrgMob" maxlength="10" placeholder="10-digit mobile"></div><div><label>New Password *</label><div class="pass-wrap"><input id="cOrgNewPass" type="password" placeholder="Enter new password"><button type="button" class="eye-btn" onclick="togglePass('cOrgNewPass',this)">Show</button></div></div><div style="grid-column:1/-1"><label>Confirm New Password *</label><div class="pass-wrap"><input id="cOrgConfPass" type="password" placeholder="Confirm new password"><button type="button" class="eye-btn" onclick="togglePass('cOrgConfPass',this)">Show</button></div></div></div><div class="info" style="margin-top:14px"><b>Security Questions (compulsory):</b></div><div class="grid2"><div><label>Q2: Favorite Movie *</label><input id="cOrgMovie" placeholder="e.g. Sholay"></div><div><label>Q3: Birth Place *</label><input id="cOrgBirth" placeholder="e.g. Mumbai"></div><div style="grid-column:1/-1"><label>Q4: Class 10th School *</label><input id="cOrgSchool" placeholder="e.g. St. Mary School"></div></div><button class="btn btn-orange" onclick="updateOrganizerCreds()">Update Organizer ID and Password</button><div style="margin-top:14px"><label>Backend API URL *</label><input id="apiUrlInput" placeholder="e.g. https://get-attended.onrender.com"><label>API Secret</label><div class="pass-wrap"><input id="apiSecretInput" type="password" placeholder="API_SECRET"><button type="button" class="eye-btn" onclick="togglePass('apiSecretInput',this)">Show</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-green btn-small" onclick="saveApiConfig()">Save and Connect</button><button class="btn btn-grey btn-small" onclick="clearApiConfig()">Cloud OFF</button><button class="btn btn-orange btn-small" onclick="syncNow()">Save to Cloud</button></div><div id="cloudStatus" style="font-size:13px;margin-top:8px"></div></div></div></section>
+</div>
+<div id="forgotModal" class="modal hidden"><div class="modal-box" style="text-align:left"><h3 style="text-align:center">Forgot Organizer Password</h3><p style="text-align:center">All answers must match.</p><label>Organizer ID *</label><input id="fOrgId" placeholder="organizer"><label>Q1: Mobile *</label><input id="fOrgMob" maxlength="10" placeholder="10-digit mobile"><label>Q2: Favorite Movie *</label><input id="fOrgMovie" placeholder="movie"><label>Q3: Birth Place *</label><input id="fOrgBirth" placeholder="birth place"><label>Q4: School *</label><input id="fOrgSchool" placeholder="school"><label>New Password *</label><div class="pass-wrap"><input id="fOrgNewPass" type="password" placeholder="new password"><button type="button" class="eye-btn" onclick="togglePass('fOrgNewPass',this)">Show</button></div><label>Confirm New Password *</label><div class="pass-wrap"><input id="fOrgConfPass" type="password" placeholder="confirm"><button type="button" class="eye-btn" onclick="togglePass('fOrgConfPass',this)">Show</button></div><div class="modal-btns"><button class="btn btn-grey" onclick="closeForgotModal()">Cancel</button><button class="btn btn-green" onclick="resetOrganizerPassword()">Reset Password</button></div></div></div>
+<div id="orgDelModal" class="modal hidden"><div class="modal-box"><h3>Warning - Delete Admin?</h3><p id="orgDelText">Do you want to permanently delete this Admin ID? Its Employees will not be able to log in.</p><div class="modal-btns"><button class="btn btn-grey" onclick="closeOrgDelModal()">Cancel</button><button class="btn btn-red" onclick="confirmOrgDel()">Yes, Delete Permanently</button></div></div></div>
+<div id="orgEditModal" class="modal hidden"><div class="modal-box" style="text-align:left;max-width:520px"><h3 style="text-align:center">Edit Admin</h3><p style="text-align:center">Update admin details. If you change the Admin ID, its Employees and records will move to the new ID automatically.</p><input id="eaOldId" type="hidden"><div class="grid2"><div><label>Admin ID * (correction allowed)</label><input id="eaId" placeholder="e.g. ADMIN001"></div><div><label>Admin Name *</label><input id="eaName" placeholder="e.g. Ramesh Admin"></div><div><label>New Password (blank = keep current)</label><div class="pass-wrap"><input id="eaPass" type="password" placeholder="Leave blank to keep current"><button type="button" class="eye-btn" onclick="togglePass('eaPass',this)">Show</button></div></div><div><label>Mobile</label><input id="eaMob" maxlength="10" placeholder="10-digit mobile"></div></div><div class="modal-btns" style="margin-top:14px"><button class="btn btn-grey" onclick="closeEditAdmin()">Cancel</button><button class="btn btn-green" onclick="saveEditAdmin()">Save Changes</button></div></div></div>
+</div>
+</div>
+</div>
+<script>
+// Organizer Portal - Hierarchy: ORGANIZER -> ADMINS -> (employees stay with admin)
+// Privacy: no employee details are stored or displayed on the organizer device.
+// Pull syncs only admins + organizer. Push sends only admins + organizer.
+// Disabling an admin automatically blocks its employees (checked at admin/employee login).
+// Admin IDs are separate and unique (case-insensitive).
+const K_ORG='get_attend_organizer', K_ADMINS='get_attend_admins', K_ADMIN='get_attend_admin', K_API='get_attend_api_url', K_API_SECRET='get_attend_api_secret', K_TOKEN='get_attend_auth_token';
+function safeGet(k,fb){try{const v=localStorage.getItem(k);if(v==null)return fb;return JSON.parse(v);}catch(e){return fb;}}
+function safeSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){alert('Storage full. Please free up space.');}}
+const DEFAULT_ORGANIZER={id:'organizer',pass:'Organizer@124',mob:'',movie:'',birth:'',school:''};
+const DEFAULT_ADMIN_ONE={id:'admin',pass:'Admin@124',mob:'',movie:'',birth:'',school:'',status:'Enabled',name:''};
+function getOrganizer(){try{const a=JSON.parse(localStorage.getItem(K_ORG)||'null');if(a&&a.id){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';return a;}}catch(e){}return Object.assign({},DEFAULT_ORGANIZER);}
+function setOrganizer(a){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';try{localStorage.setItem(K_ORG,JSON.stringify(a));}catch(e){}renderOrgInfo();try{queueCloudPush();}catch(e){}}
+function normAdm(x){x=x||{};return {id:String(x.id||''),pass:String(x.pass||''),mob:String(x.mob||''),movie:String(x.movie||''),birth:String(x.birth||''),school:String(x.school||''),photo:String(x.photo||''),status:(x.status==='Disabled'?'Disabled':'Enabled'),name:String(x.name||''),created:String(x.created||'') };}
+function todayStr(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function normId(s){return String(s||'').replace(/[\u200B-\u200D\uFEFF]/g,'').trim().replace(/\s+/g,'');}
+function togglePass(id,btn){try{const el=document.getElementById(id);if(!el)return;const show=el.type==='password';el.type=show?'text':'password';if(btn)btn.textContent=show?'Hide':'Show';}catch(e){}}
+let cloudPushTimer=null;
+function getApiUrl(){try{return (localStorage.getItem(K_API)||'').replace(/\/+$/,'').trim();}catch(e){return '';}}
+function getApiSecret(){try{return (localStorage.getItem(K_API_SECRET)||'').trim();}catch(e){return '';}}
+function getToken(){try{return (localStorage.getItem(K_TOKEN)||'').trim();}catch(e){return '';}}
+function setToken(t){try{if(t)localStorage.setItem(K_TOKEN,String(t));else localStorage.removeItem(K_TOKEN);}catch(e){}}
+function clearToken(){setToken('');}
+function isCloudMode(){return getApiUrl().length>8;}
+function authHeaders(){const h={};const t=getToken();if(t)h['Authorization']='Bearer '+t;const s=getApiSecret();if(s)h['x-api-secret']=s;return h;}
+async function apiFetch(path,opts){
+  const base=getApiUrl();if(!base)throw new Error('no-api');
+  const h=Object.assign({'Content-Type':'application/json'},authHeaders());
+  const r=await fetch(base+path,Object.assign({},(opts||{}),{headers:Object.assign({},h,((opts&&opts.headers)||{}))}));
+  let d=null;try{d=await r.json();}catch(e){d={ok:false,error:'bad-response'};}
+  if(r.status===401&&d&&(d.error==='unauthorized'||d.error==='session-expired')){clearToken();d.ok=false;d.error=d.error||'session-expired';}
+  return d;
+}
+function revokeRemoteToken(){
+  const t=getToken(),base=getApiUrl();if(!t||!base)return Promise.resolve();
+  const h={'Content-Type':'application/json','Authorization':'Bearer '+t};const s=getApiSecret();if(s)h['x-api-secret']=s;
+  return fetch(base+'/api/auth/logout',{method:'POST',headers:h}).catch(function(){}).then(function(){clearToken();});
+}
+function scrubLocalSecrets(){
+  if(!isCloudMode())return;
+  try{const a=safeGet('get_attend_employees',[]);if(Array.isArray(a)){let c=false;a.forEach(function(x){if(x&&x.pass){x.pass='';c=true;}});if(c)localStorage.setItem('get_attend_employees',JSON.stringify(a));}}catch(e){}
+  try{const a=safeGet(K_ADMIN,null);if(a&&a.pass){a.pass='';localStorage.setItem(K_ADMIN,JSON.stringify(a));}}catch(e){}
+  try{const a=safeGet(K_ADMINS,null);if(Array.isArray(a)){let c=false;a.forEach(function(x){if(x&&x.pass){x.pass='';c=true;}});if(c)localStorage.setItem(K_ADMINS,JSON.stringify(a));}}catch(e){}
+  try{const a=safeGet(K_ORG,null);if(a&&a.pass){a.pass='';localStorage.setItem(K_ORG,JSON.stringify(a));}}catch(e){}
+}
+scrubLocalSecrets();
+function getAdmins(){
+  try{
+    var arr=safeGet(K_ADMINS,null);
+    if(Array.isArray(arr)&&arr.length)return arr.map(normAdm);
+    try{
+      const one=JSON.parse(localStorage.getItem(K_ADMIN)||'null');
+      if(one&&one.id&&one.pass){
+        arr=[{id:one.id,pass:one.pass,mob:one.mob||'',movie:one.movie||'',birth:one.birth||'',school:one.school||'',status:'Enabled',name:'',created:todayStr()}];
+        safeSet(K_ADMINS,arr);
+        return arr;
+      }
+    }catch(e){}
+    if(Array.isArray(arr))return arr.map(normAdm);
+    arr=[Object.assign({},DEFAULT_ADMIN_ONE,{pass:(isCloudMode()?'':DEFAULT_ADMIN_ONE.pass),created:todayStr()})];
+    safeSet(K_ADMINS,arr);
+    return arr;
+  }catch(e){return [Object.assign({},DEFAULT_ADMIN_ONE,{pass:(isCloudMode()?'':DEFAULT_ADMIN_ONE.pass),created:todayStr()})];}
+}
+function setAdmins(a){safeSet(K_ADMINS,a.map(normAdm));try{queueCloudPush();}catch(e){}}
+async function cloudPull(silent){
+  if(!isCloudMode())return false;
+  try{
+    var d=await apiFetch('/api/organizer/pull');
+    // Fallback for an older backend that only has /api/pull.
+    if(!(d&&d.ok))d=await apiFetch('/api/pull');
+    if(d&&d.ok){
+      if(Array.isArray(d.admins)&&d.admins.length)safeSet(K_ADMINS,d.admins.map(normAdm));
+      else if(d.admin&&d.admin.id){const cur=getAdmins();if(!cur.some(function(a){return a.id.toLowerCase()===String(d.admin.id).toLowerCase();})){cur.push(normAdm(d.admin));safeSet(K_ADMINS,cur);}}
+      if(d.organizer&&d.organizer.id){try{localStorage.setItem(K_ORG,JSON.stringify(d.organizer));}catch(e){}}
+      try{renderOrgInfo();}catch(e){}
+      try{updateSyncBadge();}catch(e){}
+      return true;
+    }
+    if(d&&d.error==='session-expired'){clearSession();if(!silent)alert('Session expired. Please log in again.');}
+  }catch(e){if(!silent)alert('Failed to fetch data from cloud: '+e.message);}
+  return false;
+}
+async function cloudPush(silent){
+  if(!isCloudMode())return false;
+  try{
+    const d=await apiFetch('/api/push',{method:'POST',body:JSON.stringify({emp:[],rec:[],admins:getAdmins(),organizer:getOrganizer()})});
+    try{updateSyncBadge();}catch(e){}
+    return !!(d&&d.ok);
+  }catch(e){if(!silent)alert('Cloud save failed: '+e.message);}
+  return false;
+}
+function queueCloudPush(){try{updateSyncBadge();}catch(e){}if(!isCloudMode())return;try{clearTimeout(cloudPushTimer);}catch(e){}cloudPushTimer=setTimeout(function(){cloudPush(true);},1200);}
+async function syncNow(){if(isCloudMode()){await cloudPush();alert('Cloud sync complete. Admins will be same on all devices.');return;}return alert('Please save the API URL in Settings first.');}
+function saveApiConfig(){const u=document.getElementById('apiUrlInput');const s=document.getElementById('apiSecretInput');const v=String((u?u.value:'')||'').replace(/\/+$/,'').trim();if(!/^https?:\/\/.+/i.test(v))return alert('Please enter a valid API URL');clearToken();clearSession();try{localStorage.setItem(K_API,v);}catch(e){}try{localStorage.setItem(K_API_SECRET,String((s?s.value:'')||'').trim());}catch(e){}updateSyncBadge();cloudPull().then(function(ok){if(ok){try{renderAdminTableOrg();}catch(e){}try{updateOrgStats();}catch(e){}alert('Cloud connected successfully.');}});}
+function clearApiConfig(){clearToken();clearSession();try{localStorage.removeItem(K_API);localStorage.removeItem(K_API_SECRET);}catch(e){}const u=document.getElementById('apiUrlInput');if(u)u.value='';const s=document.getElementById('apiSecretInput');if(s)s.value='';updateSyncBadge();alert('Cloud OFF. This-device mode is active.');}
+function updateSyncBadge(){const cloud=isCloudMode();const el=document.getElementById('syncBadge');if(el){if(cloud){el.textContent='Cloud: ON';el.className='sync-badge cloud';}else{el.textContent='This device only';el.className='sync-badge';}}const box=document.getElementById('cloudStatus');if(box){box.innerHTML=cloud?('Cloud: <b>ON</b> - Admins: <b>'+getAdmins().length+'</b> (employees are not synced here)'):('Admins: <b>'+getAdmins().length+'</b> (This-device mode)');}const au=document.getElementById('apiUrlInput');if(au&&!au.value){try{au.value=getApiUrl();}catch(e){}}const as=document.getElementById('apiSecretInput');if(as&&!as.value){try{as.value=getApiSecret();}catch(e){}}}
+const K_SES='get_attend_session', SES_ORG_MS=3600*1000;
+function sesTimeoutFor(s){return SES_ORG_MS;}
+const getSession=function(){try{return JSON.parse(localStorage.getItem(K_SES)||'null');}catch(e){return null;}};
+const saveSession=function(s){try{localStorage.setItem(K_SES,JSON.stringify(s));}catch(e){}};
+const clearSession=function(){try{localStorage.removeItem(K_SES);}catch(e){}};
+let sesTimer=null,sesCountInt=null;
+function sesRemaining(){const s=getSession();if(!s||!s.loginAt)return 0;return SES_ORG_MS-(Date.now()-s.loginAt);}
+function startSesTimers(){stopSesTimers();const left=sesRemaining();if(left<=0){doAutoLogout();return;}sesTimer=setTimeout(doAutoLogout,left);updSesLeft();sesCountInt=setInterval(updSesLeft,30000);}
+function stopSesTimers(){if(sesTimer){clearTimeout(sesTimer);sesTimer=null;}if(sesCountInt){clearInterval(sesCountInt);sesCountInt=null;}const el=document.getElementById('sesLeft');if(el)el.textContent='';}
+function updSesLeft(){const el=document.getElementById('sesLeft');if(!el)return;const left=sesRemaining();if(left<=0){el.textContent='';return;}const m=Math.floor(left/60000);el.textContent=m>=1?('Auto-logout: '+m+'m'):('Auto-logout: <1m');}
+function doAutoLogout(){stopSesTimers();revokeRemoteToken();clearSession();alert('Session expired after 1 hour. Please log in again.');location.reload();}
+let orgCaptchaAns=0,orgIdOk='',orgHumanOk=false;
+function refreshCaptcha(){const a=Math.floor(Math.random()*9)+1,b=Math.floor(Math.random()*9)+1;orgCaptchaAns=a+b;const q=document.getElementById('captchaQ');if(q)q.textContent=a+' + '+b+' = ?';const c=document.getElementById('captchaAns');if(c)c.value='';}
+function orgNextToHuman(){
+  const go=function(){
+    const id=normId(document.getElementById('orgId').value);
+    if(!id)return alert('Please enter Organizer ID');
+    const og=getOrganizer();
+    var ok='';
+    if(isCloudMode()){
+      // The server verifies the Organizer ID together with the password.
+      ok=id;
+    } else {
+      var hasCustom=false;
+      try{const raw=localStorage.getItem(K_ORG);if(raw){const a=JSON.parse(raw);hasCustom=!!(a&&a.id&&a.pass);}}catch(e){hasCustom=false;}
+      if(hasCustom){if(id.toLowerCase()===String(og.id).toLowerCase())ok=og.id;}
+      else{if(id.toLowerCase()===DEFAULT_ORGANIZER.id.toLowerCase())ok=DEFAULT_ORGANIZER.id;}
+    }
+    if(!ok)return alert('Wrong Organizer ID. Please check and try again.');
+    orgIdOk=ok;document.getElementById('orgVerIdShow').textContent='('+ok+')';
+    document.getElementById('orgStep1').classList.add('done');document.getElementById('orgStep1').classList.add('hidden');document.getElementById('orgStep2').classList.remove('hidden');refreshCaptcha();};
+  go();
+}
+function orgBackToId(){document.getElementById('orgStep2').classList.add('hidden');document.getElementById('orgStep1').classList.remove('hidden');}
+function orgBackToId2(){document.getElementById('orgStep3').classList.add('hidden');document.getElementById('orgStep2').classList.remove('hidden');}
+function orgVerifyHuman(){const ans=Number(document.getElementById('captchaAns').value);const chk=document.getElementById('humanChk').checked;if(!chk)return alert('Please tick the I am human checkbox.');if(ans!==orgCaptchaAns){refreshCaptcha();return alert('Wrong captcha answer. Please try again.');}orgHumanOk=true;document.getElementById('orgStep2').classList.add('done');document.getElementById('orgStep2').classList.add('hidden');document.getElementById('orgStep3').classList.remove('hidden');}
+async function organizerLogin(){
+  if(!orgIdOk)return alert('Please complete Step 1 verification first.');
+  if(!orgHumanOk)return alert('Please complete Step 2 verification first.');
+  const p=String(document.getElementById('orgPass').value||'').trim();
+  if(!p)return alert('Please enter password');
+  if(isCloudMode()){
+    let d=null;
+    try{d=await apiFetch('/api/organizer/login',{method:'POST',body:JSON.stringify({id:orgIdOk,pass:p})});}
+    catch(e){return alert('Cloud login failed: '+e.message);}
+    if(!(d&&d.ok)){
+      if((d&&d.error)==='too-many-attempts')return alert('Too many login attempts. Please wait a few minutes and try again.');
+      return alert('Wrong Organizer ID or password. Please try again.');
+    }
+    setToken(d.token);
+    saveSession({role:'org',loginAt:Date.now()});
+    try{await cloudPull(true);}catch(e){}
+    showDash();startSesTimers();
+    return;
+  }
+  const og=getOrganizer();
+  if(p===og.pass&&orgIdOk.toLowerCase()===String(og.id).toLowerCase()){saveSession({role:'org',loginAt:Date.now()});showDash();startSesTimers();}
+  else alert('Wrong Organizer Password. Please try again.');
+}
+function showDash(){
+  document.getElementById('loginSection').classList.add('hidden');
+  document.getElementById('orgDash').classList.remove('hidden');
+  document.getElementById('logoutBtn').classList.remove('hidden');
+  document.getElementById('hdrUser').textContent=getOrganizer().id;
+  document.body.classList.add('logged-in');document.body.classList.remove('logged-out');
+  try{renderAdminTableOrg();}catch(e){}try{updateOrgStats();}catch(e){}try{renderOrgInfo();}catch(e){}try{autofillAdminId();}catch(e){}
+}
+function logout(){stopSesTimers();revokeRemoteToken();clearSession();location.reload();}
+function tryRestoreSession(){try{const s=getSession();if(!s||!s.loginAt)return;if(isCloudMode()&&!getToken()){clearSession();return;}if(Date.now()-s.loginAt>=SES_ORG_MS){clearSession();return;}if(s.role==='org'){showDash();startSesTimers();cloudPull(true);}}catch(e){}}
+function updateOrgStats(){
+  const arr=getAdmins();
+  const en=arr.filter(function(a){return a.status!=='Disabled';}).length;
+  document.getElementById('stTotal').textContent=arr.length;
+  document.getElementById('stEnabled').textContent=en;
+  document.getElementById('stDisabled').textContent=Math.max(0,arr.length-en);
+}
+function nextAdminId(){const arr=getAdmins();let max=0;arr.forEach(function(a){const m=String(a.id||'').match(/(\d+)\s*$/);if(m)max=Math.max(max,parseInt(m[1],10));});let next=max+1,id='ADMIN'+String(next).padStart(3,'0');while(arr.some(function(x){return x.id.toLowerCase()===id.toLowerCase();})){next++;id='ADMIN'+String(next).padStart(3,'0');}return id;}
+function autofillAdminId(force){const el=document.getElementById('nAdminId');if(!el)return;if(force){el.value=nextAdminId();return;}if(!el.value.trim())el.value=nextAdminId();}
+async function createAdmin(){
+  const name=document.getElementById('nAdminName').value.trim();
+  const id=document.getElementById('nAdminId').value.trim();
+  const p=document.getElementById('nAdminPass').value.trim();
+  const m=document.getElementById('nAdminMob').value.trim();
+  if(!name||!id||!p)return alert('Name, Admin ID and Password are required.');
+  if(id.length<3)return alert('Admin ID must be at least 3 characters.');
+  if(p.length<8)return alert('Password must be at least 8 characters.');
+  if(m&&!/^\d{10}$/.test(m))return alert('Mobile number must be 10 digits.');
+  const arr=getAdmins();
+  if(arr.some(function(x){return normId(x.id).toLowerCase()===normId(id).toLowerCase();}))return alert('This Admin ID already exists. Please use a different unique ID.');
+  if(isCloudMode()){
+    let r=null;
+    try{r=await apiFetch('/api/admins',{method:'POST',body:JSON.stringify({id:id,name:name,pass:p,mob:m,created:todayStr()})});}
+    catch(e){return alert('Cloud create failed: '+e.message);}
+    if(!(r&&r.ok)){
+      if((r&&r.error)==='duplicate')return alert('This Admin ID already exists. Please use a different unique ID.');
+      if((r&&r.error)==='password-too-short')return alert('Password must be at least 8 characters.');
+      return alert('Could not create the Admin on the server ('+((r&&r.error)||'unknown')+').');
+    }
+  }
+  arr.push({id:id,pass:isCloudMode()?'':p,mob:m,movie:'',birth:'',school:'',status:'Enabled',name:name,created:todayStr()});
+  setAdmins(arr);
+  ['nAdminName','nAdminId','nAdminMob'].forEach(function(i){document.getElementById(i).value='';});
+  document.getElementById('nAdminPass').value='Admin@124';
+  renderAdminTableOrg();updateOrgStats();
+  alert('Admin ID created successfully. ID: '+id);
+}
+function toggleAdmin(id){
+  const arr=getAdmins();
+  const idx=arr.findIndex(function(x){return String(x.id).toLowerCase()===String(id).toLowerCase();});
+  if(idx<0)return alert('Admin not found.');
+  const cur=arr[idx].status==='Disabled'?'Disabled':'Enabled';
+  const nxt=cur==='Disabled'?'Enabled':'Disabled';
+  var msg;
+  if(nxt==='Disabled'){msg='Disable Admin '+arr[idx].id+'? All Employees under this Admin will also be blocked automatically. You can enable it again later.';}
+  else{msg='Enable Admin '+arr[idx].id+'? Its Employees will be able to log in again.';}
+  if(!confirm(msg))return;
+  arr[idx].status=nxt;
+  setAdmins(arr);renderAdminTableOrg();updateOrgStats();
+  if(isCloudMode()){apiFetch('/api/admins/'+encodeURIComponent(arr[idx].id)+(nxt==='Disabled'?'/disable':'/enable'),{method:'POST',body:'{}'}).catch(function(e){console.log(e.message);});}
+}
+let pendingDelId='';
+function askDelAdmin(id){
+  const arr=getAdmins();
+  const f=arr.find(function(x){return String(x.id).toLowerCase()===String(id).toLowerCase();});
+  if(!f)return alert('Admin not found.');
+  pendingDelId=f.id;
+  document.getElementById('orgDelText').textContent='Do you want to permanently delete Admin '+f.id+' ('+(f.name||'-')+')? Its Employees will not be able to log in. This action cannot be undone.';
+  document.getElementById('orgDelModal').classList.remove('hidden');
+}
+function closeOrgDelModal(){pendingDelId='';document.getElementById('orgDelModal').classList.add('hidden');}
+function confirmOrgDel(){
+  if(!pendingDelId)return closeOrgDelModal();
+  setAdmins(getAdmins().filter(function(x){return String(x.id).toLowerCase()!==String(pendingDelId).toLowerCase();}));
+  if(isCloudMode()){apiFetch('/api/admins/'+encodeURIComponent(pendingDelId),{method:'DELETE'}).catch(function(e){console.log(e.message);});}
+  const doneId=pendingDelId;
+  closeOrgDelModal();renderAdminTableOrg();updateOrgStats();
+  alert('Admin '+doneId+' deleted permanently.');
+}
+function renderAdminTableOrg(){
+  const tb=document.querySelector('#adminTable tbody');if(!tb)return;tb.innerHTML='';
+  const arr=getAdmins();
+  if(!arr.length){tb.innerHTML='<tr><td colspan="9" style="color:#64748b">No Admins found. Create one above.</td></tr>';return;}
+  arr.forEach(function(a){
+    const st=a.status==='Disabled'?'<span class="badge disabled">Disabled</span>':'<span class="badge enabled">Enabled</span>';
+    const tBtn=a.status==='Disabled'
+      ?('<button class="btn btn-green btn-small" onclick="toggleAdmin(\''+a.id+'\')">Enable</button>')
+      :('<button class="btn btn-orange btn-small" onclick="toggleAdmin(\''+a.id+'\')">Disable</button>');
+    tb.innerHTML+=('<tr><td><b>'+a.id+'</b></td><td>'+(a.name||'-')+'</td><td><span title="Hidden for security">••••••••</span></td><td>'+(a.mob||'-')+'</td><td>'+st+'</td><td>'+(a.created||'-')+'</td><td>'+tBtn+'</td><td><button class="btn btn-blue btn-small" onclick="openEditAdmin(\''+a.id+'\')">Edit</button></td><td><button class="btn btn-red btn-small" onclick="askDelAdmin(\''+a.id+'\')">Delete</button></td></tr>');
+  });
+}
+function openEditAdmin(id){
+  const a=getAdmins().find(function(x){return String(x.id).toLowerCase()===String(id||'').toLowerCase();});
+  if(!a)return alert('Admin not found.');
+  document.getElementById('eaOldId').value=a.id;
+  document.getElementById('eaId').value=a.id;
+  document.getElementById('eaName').value=a.name||'';
+  document.getElementById('eaPass').value='';
+  document.getElementById('eaMob').value=a.mob||'';
+  document.getElementById('orgEditModal').classList.remove('hidden');
+}
+function closeEditAdmin(){document.getElementById('orgEditModal').classList.add('hidden');}
+function migrateLocalAdminId(oldId,newId){
+  try{
+    const empKey='get_attend_employees', recKey='get_attend_records';
+    try{
+      const rawE=localStorage.getItem(empKey);
+      if(rawE){const emps=JSON.parse(rawE);let ch=false;emps.forEach(function(e){if(e&&String(e.adminId||'').toLowerCase()===String(oldId).toLowerCase()){e.adminId=newId;ch=true;}});if(ch)localStorage.setItem(empKey,JSON.stringify(emps));}
+    }catch(e){}
+    try{
+      const rawR=localStorage.getItem(recKey);
+      if(rawR){const recs=JSON.parse(rawR);let ch2=false;recs.forEach(function(r){if(r&&r.adminId&&String(r.adminId).toLowerCase()===String(oldId).toLowerCase()){r.adminId=newId;ch2=true;}});if(ch2)localStorage.setItem(recKey,JSON.stringify(recs));}
+    }catch(e){}
+  }catch(e){}
+}
+async function saveEditAdmin(){
+  const gv=function(id){return ((document.getElementById(id)||{}).value||'').trim();};
+  const oldId=gv('eaOldId'), nid=gv('eaId'), nm=gv('eaName'), np=gv('eaPass'), mb=gv('eaMob');
+  if(!oldId)return closeEditAdmin();
+  if(!nid||!nm)return alert('Admin ID and Name are required.');
+  if(!isCloudMode()&&!np)return alert('Admin ID, Name and Password are required.');
+  if(nid.length<3)return alert('Admin ID must be at least 3 characters.');
+  if(np&&np.length<8)return alert('Password must be at least 8 characters.');
+  if(mb&&!/^\d{10}$/.test(mb))return alert('Mobile number must be 10 digits.');
+  const arr=getAdmins();
+  const idx=arr.findIndex(function(x){return String(x.id).toLowerCase()===String(oldId).toLowerCase();});
+  if(idx<0)return alert('Admin not found.');
+  if(arr.some(function(x,i){return i!==idx&&String(x.id).toLowerCase()===nid.toLowerCase();}))return alert('This Admin ID already exists. Please use a different unique ID.');
+  const idChanged=String(arr[idx].id)!==nid;
+  if(isCloudMode()){
+    try{
+      const r=await apiFetch('/api/admins/'+encodeURIComponent(arr[idx].id),{method:'PUT',body:JSON.stringify({newId:nid,name:nm,pass:np||undefined,mob:mb})});
+      if(!(r&&r.ok)){
+        if((r&&r.error)==='duplicate')return alert('This Admin ID already exists on the server. Please use a different unique ID.');
+        if((r&&r.error)==='not-found')return alert('Admin not found on the server. Please sync and try again.');
+        if((r&&r.error)==='password-too-short')return alert('Password must be at least 8 characters.');
+        return alert('Could not update Admin on the server ('+((r&&r.error)||'unknown')+').');
+      }
+    }catch(e){return alert('Could not update Admin on the server: '+e.message);}
+  }
+  arr[idx].id=nid;arr[idx].name=nm;if(np)arr[idx].pass=isCloudMode()?'':np;arr[idx].mob=mb;
+  setAdmins(arr);
+  if(idChanged)migrateLocalAdminId(oldId,nid);
+  closeEditAdmin();renderAdminTableOrg();updateOrgStats();
+  alert('Admin updated successfully.'+(idChanged?(' ID: '+oldId+' changed to '+nid+'. Linked employees moved automatically.'):' ID: '+nid));
+}
+function renderOrgInfo(){
+  const og=getOrganizer();
+  const c=document.getElementById('curOrgIdShow');if(c)c.textContent=og.id;
+  const m=document.getElementById('curOrgMobShow');if(m)m.textContent=og.mob||'- (not set)';
+  const s=document.getElementById('curOrgSecShow');if(s)s.textContent=(og.movie&&og.birth&&og.school)?'Set (3/3)':'Not set';
+  const i=document.getElementById('cOrgId');if(i&&!i.value)i.value=og.id;
+  const mi=document.getElementById('cOrgMob');if(mi&&!mi.value&&og.mob)mi.value=og.mob;
+  const mv=document.getElementById('cOrgMovie');if(mv&&!mv.value&&og.movie)mv.value=og.movie;
+  const bi=document.getElementById('cOrgBirth');if(bi&&!bi.value&&og.birth)bi.value=og.birth;
+  const sc=document.getElementById('cOrgSchool');if(sc&&!sc.value&&og.school)sc.value=og.school;
+}
+async function updateOrganizerCreds(){
+  const curP=document.getElementById('cOrgCurPass').value.trim();
+  const newId=document.getElementById('cOrgId').value.trim();
+  const newMob=document.getElementById('cOrgMob').value.trim();
+  const newP=document.getElementById('cOrgNewPass').value.trim();
+  const confP=document.getElementById('cOrgConfPass').value.trim();
+  const mv=document.getElementById('cOrgMovie').value.trim();
+  const bi=document.getElementById('cOrgBirth').value.trim();
+  const sc=document.getElementById('cOrgSchool').value.trim();
+  const og=getOrganizer();
+  if(!curP||!newId||!newMob||!newP||!confP)return alert('Please fill all organizer fields.');
+  if(!mv||!bi||!sc)return alert('Please fill all 3 security answers.');
+  if(!/^\d{10}$/.test(newMob))return alert('Mobile number must be 10 digits.');
+  if(newP!==confP)return alert('New password and confirm password do not match.');
+  if(newP.length<8)return alert('Password must be at least 8 characters.');
+  if(isCloudMode()){
+    let d=null;
+    try{d=await apiFetch('/api/organizer',{method:'PUT',body:JSON.stringify({id:newId,pass:newP,currentPass:curP,mob:newMob,movie:mv,birth:bi,school:sc})});}
+    catch(e){return alert('Cloud update failed: '+e.message);}
+    if(!(d&&d.ok)){
+      if((d&&d.error)==='wrong-current-password')return alert('Wrong current password.');
+      if((d&&d.error)==='password-too-short')return alert('Password must be at least 8 characters.');
+      return alert('Organizer update failed ('+((d&&d.error)||'unknown')+').');
+    }
+    setOrganizer({id:d.organizer.id,pass:'',mob:d.organizer.mob||newMob,movie:d.organizer.movie||mv,birth:d.organizer.birth||bi,school:d.organizer.school||sc});
+  } else {
+    if(curP!==og.pass)return alert('Wrong current password.');
+    setOrganizer({id:newId,pass:newP,mob:newMob,movie:mv,birth:bi,school:sc});
+  }
+  document.getElementById('cOrgCurPass').value='';document.getElementById('cOrgNewPass').value='';document.getElementById('cOrgConfPass').value='';
+  alert('Organizer updated successfully. New ID: '+newId);
+}
+function openForgotModal(){['fOrgId','fOrgMob','fOrgMovie','fOrgBirth','fOrgSchool','fOrgNewPass','fOrgConfPass'].forEach(function(i){const el=document.getElementById(i);if(el)el.value='';});document.getElementById('forgotModal').classList.remove('hidden');}
+function closeForgotModal(){document.getElementById('forgotModal').classList.add('hidden');}
+async function resetOrganizerPassword(){
+  const g=function(id){return ((document.getElementById(id)||{}).value||'').trim();};
+  const id=g('fOrgId'),mob=g('fOrgMob'),movie=g('fOrgMovie'),birth=g('fOrgBirth'),school=g('fOrgSchool'),np=g('fOrgNewPass'),cp=g('fOrgConfPass');
+  if(!id||!mob||!movie||!birth||!school||!np||!cp)return alert('All fields are compulsory.');
+  if(np!==cp)return alert('New password and confirm password do not match.');
+  if(np.length<8)return alert('Password must be at least 8 characters.');
+  const og=getOrganizer();
+  if(isCloudMode()){
+    let d=null;
+    try{d=await apiFetch('/api/organizer/forgot',{method:'POST',body:JSON.stringify({id,mob,movie,birth,school,newPass:np})});}
+    catch(e){return alert('Cloud reset failed: '+e.message);}
+    if(!(d&&d.ok)){
+      if((d&&d.error)==='answers')return alert('Organizer ID or one of the four answers did not match.');
+      if((d&&d.error)==='password-too-short')return alert('Password must be at least 8 characters.');
+      return alert('Password reset failed ('+((d&&d.error)||'unknown')+').');
+    }
+    setOrganizer({id:og.id,pass:'',mob:og.mob||mob,movie:og.movie||movie,birth:og.birth||birth,school:og.school||school});
+    closeForgotModal();alert('Password reset successful. Please log in with the new password.');
+    return;
+  }
+  if(!og.mob||!og.movie||!og.birth||!og.school)return alert('Security questions are not set. Please log in and save them in Settings.');
+  if(id.toLowerCase()!==String(og.id).toLowerCase())return alert('Organizer ID did not match.');
+  if(mob!==og.mob)return alert('Q1 answer is wrong.');
+  if(movie.toLowerCase()!==String(og.movie).toLowerCase())return alert('Q2 answer is wrong.');
+  if(birth.toLowerCase()!==String(og.birth).toLowerCase())return alert('Q3 answer is wrong.');
+  if(school.toLowerCase()!==String(og.school).toLowerCase())return alert('Q4 answer is wrong.');
+  setOrganizer({id:og.id,pass:np,mob:og.mob,movie:og.movie,birth:og.birth,school:og.school});
+  closeForgotModal();alert('Password reset successful. Please log in with the new password.');
+}
+function showSection(name){
+  try{
+    document.querySelectorAll('[data-section]').forEach(function(s){s.style.display=(s.getAttribute('data-section')===name?'':'none');});
+    document.querySelectorAll('[data-nav]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-nav')===name);});
+    var sb=document.getElementById('sidebar');if(sb&&window.innerWidth<=900)sb.classList.remove('open');
+    try{localStorage.setItem('org_section',name);}catch(e){}
+  }catch(e){}
+}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'&&e.code!=='NumpadEnter')return;
+  const t=e.target||{};if(t.tagName==='BUTTON'||t.tagName==='TEXTAREA'||t.tagName==='SELECT')return;
+  const id=t.id||'';
+  if(id==='orgId'){e.preventDefault();orgNextToHuman();}
+  else if(id==='captchaAns'){e.preventDefault();orgVerifyHuman();}
+  else if(id==='orgPass'){e.preventDefault();organizerLogin();}
+});
+refreshCaptcha();renderOrgInfo();updateSyncBadge();
+(function(){try{var saved=localStorage.getItem('org_section')||'dashboard';showSection(saved);}catch(e){showSection('dashboard');}})();
+(function(){try{if(isCloudMode())cloudPull(true).then(function(){tryRestoreSession();}).catch(function(){tryRestoreSession();});else tryRestoreSession();}catch(e){tryRestoreSession();}})();
+</script>
+</body>
+</html>
