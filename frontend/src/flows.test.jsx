@@ -73,6 +73,16 @@ describe('offline sign-in flows', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Employee login' }));
     expect(await screen.findByRole('heading', { name: 'My dashboard' })).toBeInTheDocument();
   });
+
+  it('signs an employee in through the unified portal', async () => {
+    saveEmployees([{ id: 'EMP001', name: 'Asha', pass: 'Employee@1', adminId: 'admin', status: 'Enabled' }]);
+    const { container } = renderAt('/legacy-unified');
+    const inputs = container.querySelectorAll('form.login-form input');
+    fireEvent.change(inputs[0], { target: { value: 'EMP001' } });
+    fireEvent.change(inputs[1], { target: { value: 'Employee@1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Employee login' }));
+    expect(await screen.findByRole('heading', { name: 'My dashboard' })).toBeInTheDocument();
+  });
 });
 
 describe('cloud sign-in flow', () => {

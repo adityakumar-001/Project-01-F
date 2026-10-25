@@ -2,7 +2,7 @@
 
 Attendance app for Organizer -> Admins -> Employees.
 
-- Frontend: React 19 + Vite in `frontend/` with routes `/organizer`, `/admin` and `/employee`.
+- Frontend: React 19 + Vite in `frontend/` with routes `/organizer`, `/admin`, `/employee` and `/legacy-unified`.
 - Backend: Node.js + Express + MySQL in `backend/` (`server.js`, `db.sql`).
 - Legacy root HTML files are kept only as behavior references; the server redirects their URLs to the React routes.
 

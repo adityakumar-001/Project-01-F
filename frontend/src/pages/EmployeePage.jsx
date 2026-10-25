@@ -581,6 +581,7 @@ export default function EmployeePage() {
       title={active === 'dashboard' ? 'My dashboard' : active === 'punch' ? 'Mark attendance' : active === 'attendance' ? 'My attendance' : 'Settings'}
       subtitle={`${profile.name || profile.id} · ${profile.store || 'No store'}${profile.storeArea ? ` · ${profile.storeArea}` : ''}`}
       user={profile.name || profile.id}
+      company={owner?.company || ''}
       photo={profile.photo}
       onLogout={handleLogout}
       remainingMs={remainingMs}
@@ -841,10 +842,11 @@ export default function EmployeePage() {
               <div><span>Mobile</span><strong>{profile.mob || '—'}</strong></div>
               <div><span>Store</span><strong>{profile.store || '—'}{profile.storeArea ? ` · ${profile.storeArea}` : ''}</strong></div>
               <div><span>Store map</span>{profile.storeLink ? <a href={profile.storeLink} target="_blank" rel="noreferrer">Open location ↗</a> : <strong>Not set</strong>}</div>
+              <div><span>Company</span><strong>{owner?.company || '—'}</strong></div>
               <div><span>Status</span><Badge tone={profile.status === 'Enabled' ? 'present' : 'disabled'}>{profile.status}</Badge></div>
               <div><span>Admin</span><strong>{owner?.name || owner?.id || '—'}</strong></div>
             </div>
-            <p className="field-hint">Need a name, ID or store correction? Contact your admin. Employees can update only their photo and password.</p>
+            <p className="field-hint">Need a name, ID or store correction? Contact your admin. Employees can update only their photo and password. Company name is managed by the admin.</p>
           </div>
 
           <div className="stack">

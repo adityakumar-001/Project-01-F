@@ -26,6 +26,7 @@ export const DEFAULT_ADMIN = {
   id: 'admin',
   pass: 'Admin@124',
   name: '',
+  company: '',
   mob: '',
   movie: '',
   birth: '',
@@ -33,6 +34,7 @@ export const DEFAULT_ADMIN = {
   photo: '',
   status: 'Enabled',
   created: '',
+  mustChangePass: false,
 };
 
 export const DEFAULT_EMPLOYEE_PASSWORD = 'MAIPL@001';

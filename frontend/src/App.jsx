@@ -3,6 +3,7 @@ import Landing from './pages/Landing.jsx';
 import OrganizerPage from './pages/OrganizerPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import EmployeePage from './pages/EmployeePage.jsx';
+import UnifiedPage from './pages/UnifiedPage.jsx';
 
 function NotFound() {
   return (
@@ -23,12 +24,13 @@ export default function App() {
       <Route path="/organizer" element={<OrganizerPage />} />
       <Route path="/admin" element={<AdminPage />} />
       <Route path="/employee" element={<EmployeePage />} />
+      <Route path="/legacy-unified" element={<UnifiedPage />} />
 
       <Route path="/index.html" element={<Navigate to="/" replace />} />
       <Route path="/organizer.html" element={<Navigate to="/organizer" replace />} />
       <Route path="/admin.html" element={<Navigate to="/admin" replace />} />
       <Route path="/employee.html" element={<Navigate to="/employee" replace />} />
-      <Route path="/legacy-unified.html" element={<Navigate to="/" replace />} />
+      <Route path="/legacy-unified.html" element={<Navigate to="/legacy-unified" replace />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

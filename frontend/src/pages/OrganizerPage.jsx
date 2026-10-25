@@ -54,6 +54,7 @@ function securitySet(admin) {
 const BLANK_ADMIN_FORM = {
   id: '',
   name: '',
+  company: '',
   pass: '',
   mob: '',
   movie: '',
@@ -87,12 +88,22 @@ function AdminFormModal({ open, mode, initial, onClose, onSave }) {
     const idError = validateNewId(form.id);
     if (idError) return setError(idError);
     if (!form.name.trim()) return setError('Admin name is required.');
+    if (!form.company.trim()) return setError('Company name is required.');
+    if (form.company.trim().length > 150) return setError('Company name must be 150 characters or fewer.');
     if (mode === 'create' && !form.pass) return setError('Set a login password for this admin.');
     const pe = form.pass ? validatePassword(form.pass) : '';
     if (pe) return setError(pe);
     setBusy(true);
     try {
-      await onSave({ ...form, id: normalizeId(form.id), name: form.name.trim() }, mode);
+      await onSave(
+        {
+          ...form,
+          id: normalizeId(form.id),
+          name: form.name.trim(),
+          company: form.company.trim(),
+        },
+        mode,
+      );
     } catch (err) {
       setError(err.message || 'Could not save the admin.');
     } finally {
@@ -118,6 +129,15 @@ function AdminFormModal({ open, mode, initial, onClose, onSave }) {
       <form id="admin-form" onSubmit={submit} className="stack">
         <div className="form-grid">
           <TextField label="Admin name" required value={form.name} onChange={update('name')} placeholder="e.g. Ramesh Admin" autoFocus />
+          <TextField
+            label="Company name"
+            required
+            value={form.company}
+            onChange={update('company')}
+            maxLength={150}
+            placeholder="e.g. MAIPL Retail Pvt Ltd"
+            hint="Shown at the top of every employee portal under this admin."
+          />
           <TextField label="Admin ID" required value={form.id} onChange={update('id')} hint="Letters, numbers, dot, dash or underscore." />
           <PasswordField
             label={mode === 'create' ? 'Password' : 'New password (optional)'}
@@ -252,6 +272,7 @@ export default function OrganizerPage() {
           await api.createAdmin({
             id: form.id,
             name: form.name,
+            company: form.company,
             pass: form.pass,
             mob: form.mob,
             status: form.status,
@@ -268,11 +289,17 @@ export default function OrganizerPage() {
             await api.updateAdmin(original.id, {
               newId: form.id,
               name: form.name,
+              company: form.company,
               mob: form.mob,
               pass: form.pass || undefined,
             });
           } else {
-            await api.updateAdmin(original.id, { newId: form.id, name: form.name, mob: form.mob });
+            await api.updateAdmin(original.id, {
+              newId: form.id,
+              name: form.name,
+              company: form.company,
+              mob: form.mob,
+            });
           }
           await api.push({ admins: [{ ...form, pass: '' }], organizer, admin: null });
           if (original?.status !== form.status) {
@@ -294,6 +321,7 @@ export default function OrganizerPage() {
         ...form,
         pass: form.pass,
         created: todayStr(),
+        mustChangePass: true,
       };
       nextAdmins = [...admins, created];
     } else {
@@ -499,7 +527,7 @@ export default function OrganizerPage() {
                         <td>
                           <div className="identity">
                             <Avatar name={admin.name || admin.id} photo={admin.photo} size={34} />
-                            <div><strong>{admin.id}</strong><small>{admin.name || 'No name set'}</small></div>
+                            <div><strong>{admin.id}</strong><small>{admin.name || 'No name set'}{admin.company ? ` · ${admin.company}` : ''}</small></div>
                           </div>
                         </td>
                         <td>{admin.mob || '—'}</td>
@@ -567,7 +595,7 @@ export default function OrganizerPage() {
                     <td>
                       <div className="identity">
                         <Avatar name={admin.name || admin.id} photo={admin.photo} size={34} />
-                        <div><strong>{admin.id}</strong><small>{admin.name || 'No name set'}</small></div>
+                        <div><strong>{admin.id}</strong><small>{admin.name || 'No name set'}{admin.company ? ` · ${admin.company}` : ''}</small></div>
                       </div>
                     </td>
                     <td>{admin.mob || '—'}</td>

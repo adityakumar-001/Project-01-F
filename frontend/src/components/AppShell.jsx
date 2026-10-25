@@ -17,6 +17,7 @@ export default function AppShell({
   title,
   subtitle,
   user,
+  company,
   photo,
   onLogout,
   remainingMs,
@@ -94,6 +95,7 @@ export default function AppShell({
             ☰
           </button>
           <div className="page-head">
+            {company ? <div className="company-name" title="Company">{company}</div> : null}
             <h1>{title}</h1>
             {subtitle ? <p>{subtitle}</p> : null}
           </div>

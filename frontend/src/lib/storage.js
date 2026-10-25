@@ -109,6 +109,7 @@ export function normalizeAdmin(value) {
     id: String(source.id || ''),
     pass: String(source.pass || ''),
     name: String(source.name || ''),
+    company: String(source.company || ''),
     mob: String(source.mob || ''),
     movie: String(source.movie || ''),
     birth: String(source.birth || ''),
@@ -116,6 +117,8 @@ export function normalizeAdmin(value) {
     photo: String(source.photo || ''),
     status: source.status === 'Disabled' ? 'Disabled' : 'Enabled',
     created: String(source.created || ''),
+    mustChangePass:
+      source.mustChangePass === true || source.mustChangePass === 1 || source.mustChangePass === '1',
   };
 }
 

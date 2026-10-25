@@ -38,6 +38,7 @@ export function errorMessage(error) {
     'weak-password': 'Password is too weak. Use at least 8 characters.',
     'id-invalid': 'Enter a valid ID.',
     forbidden: 'You do not have permission to do that.',
+    'company-required': 'Company name is required. Enter the admin’s company name.',
     'db-error': 'The server could not complete that request.',
     'api-secret-invalid': 'API secret is incorrect.',
     'bad-request': 'The request was rejected by the server.',

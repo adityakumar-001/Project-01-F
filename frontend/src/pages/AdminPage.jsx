@@ -312,6 +312,9 @@ export default function AdminPage() {
     setDate('');
     setStatusFilter('');
     setRecSearch('');
+    setFirstPass('');
+    setFirstConfirm('');
+    setFirstError('');
   }, [session?.id]);
 
   const [admin, setAdmin] = useState(getAdmin);
@@ -332,6 +335,10 @@ export default function AdminPage() {
   const [email, setEmail] = useState(getAdminEmail);
   const [importing, setImporting] = useState(false);
   const [profile, setProfile] = useState(() => ({ ...getAdmin(), currentPass: '', newPass: '', confirm: '' }));
+  const [firstPass, setFirstPass] = useState('');
+  const [firstConfirm, setFirstConfirm] = useState('');
+  const [firstError, setFirstError] = useState('');
+  const [firstBusy, setFirstBusy] = useState(false);
 
   const refreshProfile = useCallback((value) => {
     setProfile({ ...value, currentPass: '', newPass: '', confirm: '' });
@@ -579,6 +586,7 @@ export default function AdminPage() {
     event.preventDefault();
     const idError = validateNewId(profile.id);
     if (idError) return notify(idError, 'error');
+    if (!String(profile.company || '').trim()) return notify('Company name is required.', 'error');
     const nextId = normalizeId(profile.id);
     if (getAdmins().some((item) => !sameId(item.id, admin.id) && sameId(item.id, nextId))) {
       return notify('That admin ID already belongs to another admin.', 'error');
@@ -595,6 +603,7 @@ export default function AdminPage() {
         const data = await api.updateAdminSelf({
           newId: nextId,
           name: profile.name,
+          company: String(profile.company || '').trim(),
           mob: profile.mob,
           movie: profile.movie,
           birth: profile.birth,
@@ -623,6 +632,7 @@ export default function AdminPage() {
           ...admin,
           id: nextId,
           name: profile.name,
+          company: String(profile.company || '').trim(),
           mob: profile.mob,
           movie: profile.movie,
           birth: profile.birth,
@@ -642,6 +652,34 @@ export default function AdminPage() {
       }
     } catch (error) {
       notify(errorMessage(error), 'error');
+    }
+  };
+
+  const submitFirstPassword = async (event) => {
+    event.preventDefault();
+    setFirstError('');
+    const pe = validatePassword(firstPass);
+    if (pe) return setFirstError(pe);
+    if (firstPass !== firstConfirm) return setFirstError('Passwords do not match.');
+    setFirstBusy(true);
+    try {
+      if (isCloudMode()) {
+        await api.changePassword('', firstPass);
+      }
+      const updated = saveAdmin({
+        ...admin,
+        pass: isCloudMode() ? '' : firstPass,
+        mustChangePass: false,
+      });
+      setAdmin(updated);
+      refreshProfile(updated);
+      setFirstPass('');
+      setFirstConfirm('');
+      notify('Password updated. You can now use the admin portal.', 'success');
+    } catch (error) {
+      setFirstError(errorMessage(error));
+    } finally {
+      setFirstBusy(false);
     }
   };
 
@@ -843,6 +881,7 @@ export default function AdminPage() {
       }
       subtitle={`${admin.name || admin.id} · ${employees.length} employees · ${isCloudMode() ? 'cloud connected' : 'offline device'}`}
       user={admin.name || session.id}
+      company={admin.company || ''}
       photo={admin.photo}
       onLogout={handleLogout}
       remainingMs={remainingMs}
@@ -1161,6 +1200,7 @@ export default function AdminPage() {
               <div className="form-grid">
                 <TextField label="Admin ID" required value={profile.id} onChange={(event) => setProfile((prev) => ({ ...prev, id: event.target.value }))} />
                 <TextField label="Name" value={profile.name} onChange={(event) => setProfile((prev) => ({ ...prev, name: event.target.value }))} />
+                <TextField label="Company name" required maxLength={150} value={profile.company} onChange={(event) => setProfile((prev) => ({ ...prev, company: event.target.value }))} hint="Employees under this admin see this name at the top of their portal." />
                 <TextField label="Mobile" value={profile.mob} onChange={(event) => setProfile((prev) => ({ ...prev, mob: event.target.value }))} maxLength={10} inputMode="numeric" />
                 <TextField label="Favourite movie" value={profile.movie} onChange={(event) => setProfile((prev) => ({ ...prev, movie: event.target.value }))} />
                 <TextField label="Birth place" value={profile.birth} onChange={(event) => setProfile((prev) => ({ ...prev, birth: event.target.value }))} />
@@ -1191,6 +1231,27 @@ export default function AdminPage() {
           </div>
         </div>
       ) : null}
+
+      <Modal
+        open={Boolean(admin.mustChangePass)}
+        onClose={() => {}}
+        title="Set your new password"
+        subtitle="Your admin ID was created with a temporary password. Choose a private password to continue."
+        footer={
+          <>
+            <button type="button" className="btn btn-ghost" onClick={handleLogout}>Sign out</button>
+            <button type="submit" form="admin-first-pass-form" className="btn btn-primary" disabled={firstBusy}>
+              {firstBusy ? 'Saving…' : 'Set password & continue'}
+            </button>
+          </>
+        }
+      >
+        <form id="admin-first-pass-form" onSubmit={submitFirstPassword} className="stack">
+          <PasswordField label="New password" required value={firstPass} onChange={(event) => setFirstPass(event.target.value)} autoComplete="new-password" hint="At least 8 characters." />
+          <PasswordField label="Confirm new password" required value={firstConfirm} onChange={(event) => setFirstConfirm(event.target.value)} autoComplete="new-password" />
+          {firstError ? <div className="form-error" role="alert">{firstError}</div> : null}
+        </form>
+      </Modal>
 
       <EmployeeFormModal
         open={Boolean(empModal)}

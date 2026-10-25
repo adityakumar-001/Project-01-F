@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import App from './App.jsx';
@@ -40,5 +40,20 @@ describe('app routes', () => {
 
     renderAt('/employee');
     expect(screen.getByRole('button', { name: 'Employee login' })).toBeInTheDocument();
+  });
+
+  it('renders the unified portal and switches between employee and admin login', () => {
+    renderAt('/legacy-unified');
+    expect(screen.getByRole('heading', { name: 'Employee sign in' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Employee/ })).toHaveAttribute('aria-selected', 'true');
+
+    fireEvent.click(screen.getByRole('tab', { name: /Admin/ }));
+    expect(screen.getByRole('heading', { name: 'Admin sign in' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Admin/ })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('redirects legacy-unified.html to the unified portal', () => {
+    renderAt('/legacy-unified.html');
+    expect(screen.getByRole('heading', { name: 'Employee sign in' })).toBeInTheDocument();
   });
 });
