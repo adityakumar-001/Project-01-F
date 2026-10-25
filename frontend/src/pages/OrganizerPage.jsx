@@ -384,11 +384,13 @@ export default function OrganizerPage() {
     try {
       if (isCloudMode()) {
         await api.deleteAdmin(admin.id);
-        await pullCloud(true);
-      } else {
-        setAdmins(saveAdmins(admins.filter((item) => item.id !== admin.id)));
-        if (sameId(getAdmin().id, admin.id)) removeKey(STORAGE_KEYS.admin);
       }
+      // Remove locally as well (and never keep the deleted admin's profile),
+      // so a failed/partial pull cannot resurrect the account on this device.
+      const current = getAdmin();
+      setAdmins(saveAdmins(admins.filter((item) => !sameId(item.id, admin.id))));
+      if (sameId(current.id, admin.id)) removeKey(STORAGE_KEYS.admin);
+      if (isCloudMode()) await pullCloud(true);
       notify(`${admin.id} deleted.`, 'success');
     } catch (error) {
       notify(errorMessage(error), 'error');
@@ -452,7 +454,7 @@ export default function OrganizerPage() {
       if (filter === 'enabled' && admin.status !== 'Enabled') return false;
       if (filter === 'disabled' && admin.status !== 'Disabled') return false;
       if (!query) return true;
-      return [admin.id, admin.name, admin.mob].some((value) => String(value || '').toLowerCase().includes(query));
+      return [admin.id, admin.name, admin.company, admin.mob].some((value) => String(value || '').toLowerCase().includes(query));
     });
   }, [admins, search, filter]);
 
@@ -519,7 +521,7 @@ export default function OrganizerPage() {
               <div className="table-wrap">
                 <table>
                   <thead>
-                    <tr><th>Admin</th><th>Mobile</th><th>Security</th><th>Status</th><th>Created</th></tr>
+                    <tr><th>Admin</th><th>Company</th><th>Mobile</th><th>Security</th><th>Status</th><th>Created</th></tr>
                   </thead>
                   <tbody>
                     {admins.slice(0, 6).map((admin) => (
@@ -527,9 +529,10 @@ export default function OrganizerPage() {
                         <td>
                           <div className="identity">
                             <Avatar name={admin.name || admin.id} photo={admin.photo} size={34} />
-                            <div><strong>{admin.id}</strong><small>{admin.name || 'No name set'}{admin.company ? ` · ${admin.company}` : ''}</small></div>
+                            <div><strong>{admin.id}</strong><small>{admin.name || 'No name set'}</small></div>
                           </div>
                         </td>
+                        <td>{admin.company || '—'}</td>
                         <td>{admin.mob || '—'}</td>
                         <td>{securitySet(admin) ? <Badge tone="present">Complete</Badge> : <Badge tone="neutral">Incomplete</Badge>}</td>
                         <td><Badge tone={admin.status === 'Enabled' ? 'present' : 'disabled'}>{admin.status}</Badge></td>
@@ -537,7 +540,7 @@ export default function OrganizerPage() {
                       </tr>
                     ))}
                     {!admins.length ? (
-                      <tr><td colSpan={5} className="table-empty">No admins yet. Create the first admin account.</td></tr>
+                      <tr><td colSpan={6} className="table-empty">No admins yet. Create the first admin account.</td></tr>
                     ) : null}
                   </tbody>
                 </table>
@@ -572,7 +575,7 @@ export default function OrganizerPage() {
             <div className="toolbar">
               <input
                 className="search-input"
-                placeholder="Search ID, name or mobile…"
+                placeholder="Search ID, name, company or mobile…"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
@@ -587,7 +590,7 @@ export default function OrganizerPage() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Admin</th><th>Mobile</th><th>Security</th><th>Status</th><th>Created</th><th className="right">Access</th><th className="right">Actions</th></tr>
+                <tr><th>Admin</th><th>Company</th><th>Mobile</th><th>Security</th><th>Status</th><th>Created</th><th className="right">Access</th><th className="right">Actions</th></tr>
               </thead>
               <tbody>
                 {filteredAdmins.map((admin) => (
@@ -595,9 +598,10 @@ export default function OrganizerPage() {
                     <td>
                       <div className="identity">
                         <Avatar name={admin.name || admin.id} photo={admin.photo} size={34} />
-                        <div><strong>{admin.id}</strong><small>{admin.name || 'No name set'}{admin.company ? ` · ${admin.company}` : ''}</small></div>
+                        <div><strong>{admin.id}</strong><small>{admin.name || 'No name set'}</small></div>
                       </div>
                     </td>
+                    <td>{admin.company || '—'}</td>
                     <td>{admin.mob || '—'}</td>
                     <td>{securitySet(admin) ? <Badge tone="present">Set</Badge> : <Badge tone="neutral">Missing</Badge>}</td>
                     <td><Badge tone={admin.status === 'Enabled' ? 'present' : 'disabled'}>{admin.status}</Badge></td>
@@ -620,7 +624,7 @@ export default function OrganizerPage() {
                   </tr>
                 ))}
                 {!filteredAdmins.length ? (
-                  <tr><td colSpan={7} className="table-empty">No admins match this filter.</td></tr>
+                  <tr><td colSpan={8} className="table-empty">No admins match this filter.</td></tr>
                 ) : null}
               </tbody>
             </table>

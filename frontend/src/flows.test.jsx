@@ -4,8 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
-import { setApiConfig } from './lib/storage.js';
-import { saveEmployees } from './lib/storage.js';
+import { saveAdmins, saveEmployees, setApiConfig } from './lib/storage.js';
 
 function renderAt(path) {
   return render(
@@ -82,6 +81,39 @@ describe('offline sign-in flows', () => {
     fireEvent.change(inputs[1], { target: { value: 'Employee@1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Employee login' }));
     expect(await screen.findByRole('heading', { name: 'My dashboard' })).toBeInTheDocument();
+  });
+
+  it('shows the owner admin company in the employee portal', async () => {
+    saveAdmins([{ id: 'ADMIN001', name: 'Ramesh', company: 'Acme Retail', pass: '', status: 'Enabled' }]);
+    saveEmployees([{ id: 'EMP001', name: 'Asha', pass: 'Employee@1', adminId: 'ADMIN001', status: 'Enabled' }]);
+    const { container } = renderAt('/employee');
+    const inputs = container.querySelectorAll('form.login-form input');
+    fireEvent.change(inputs[0], { target: { value: 'EMP001' } });
+    fireEvent.change(inputs[1], { target: { value: 'Employee@1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Employee login' }));
+    expect(await screen.findByText('Acme Retail')).toBeInTheDocument();
+  });
+
+  it('does not sign in the default admin after the last admin was deleted', async () => {
+    saveAdmins([]);
+    const { container } = renderAt('/admin');
+    await signInStepped(container, 'admin', 'Admin@124', /Admin login/i);
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/Incorrect ID or password/i);
+    expect(screen.queryByRole('heading', { name: 'Attendance dashboard' })).not.toBeInTheDocument();
+  });
+
+  it('blocks an employee when its owner admin was deleted', async () => {
+    saveAdmins([]);
+    saveEmployees([{ id: 'EMP001', name: 'Asha', pass: 'Employee@1', adminId: 'admin', status: 'Enabled' }]);
+    const { container } = renderAt('/employee');
+    const inputs = container.querySelectorAll('form.login-form input');
+    fireEvent.change(inputs[0], { target: { value: 'EMP001' } });
+    fireEvent.change(inputs[1], { target: { value: 'Employee@1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Employee login' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/admin who owns this account/i);
+    expect(screen.queryByRole('heading', { name: 'My dashboard' })).not.toBeInTheDocument();
   });
 });
 

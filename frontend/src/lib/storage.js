@@ -171,9 +171,21 @@ export function saveOrganizer(value) {
 }
 
 export function getAdmins() {
-  const stored = readJson(STORAGE_KEYS.admins, null);
-  if (Array.isArray(stored) && stored.length) return stored.map(normalizeAdmin);
+  // An existing key is authoritative — even when it contains an empty array.
+  // That is how a deleted last admin stays deleted instead of being replaced
+  // by the built-in default account on the next read.
+  const raw = readRaw(STORAGE_KEYS.admins, null);
+  if (raw !== null) {
+    try {
+      const stored = JSON.parse(raw);
+      if (Array.isArray(stored)) return stored.map(normalizeAdmin);
+    } catch {
+      /* Corrupted list: treat it as empty, never as "first run". */
+    }
+    return [];
+  }
 
+  // One-time migration from the legacy single-admin key.
   const single = readJson(STORAGE_KEYS.admin, null);
   if (single && single.id) {
     const migrated = [normalizeAdmin({ ...single, status: single.status || 'Enabled', created: single.created || todayStr() })];
@@ -181,6 +193,10 @@ export function getAdmins() {
     return migrated;
   }
 
+  // Cloud installs start empty: the server decides which admin IDs exist.
+  if (isCloudMode()) return [];
+
+  // First run of the offline app only.
   const seed = [normalizeAdmin({ ...DEFAULT_ADMIN, created: todayStr() })];
   writeJson(STORAGE_KEYS.admins, seed);
   return seed;
@@ -193,14 +209,18 @@ export function saveAdmins(values) {
 }
 
 export function getAdmin() {
+  const admins = getAdmins();
   const stored = readJson(STORAGE_KEYS.admin, null);
-  if (stored && stored.id) return normalizeAdmin(stored);
-  const first = getAdmins()[0];
-  return first || { ...DEFAULT_ADMIN };
+  if (stored && stored.id) {
+    const match = admins.find((item) => item.id.toLowerCase() === String(stored.id).toLowerCase());
+    if (match) return match;
+  }
+  return admins[0] || normalizeAdmin({ ...DEFAULT_ADMIN, id: '', pass: '' });
 }
 
 export function saveAdmin(value) {
   const admin = normalizeAdmin(value);
+  if (!admin.id) return admin; // never create/resurrect an admin without an ID
   writeJson(STORAGE_KEYS.admin, admin);
   const admins = getAdmins();
   const index = admins.findIndex((item) => item.id.toLowerCase() === admin.id.toLowerCase());

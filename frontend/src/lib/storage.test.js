@@ -40,6 +40,19 @@ describe('identity storage', () => {
     expect(localStorage.getItem(STORAGE_KEYS.admins)).toContain('oldadmin');
   });
 
+  it('keeps a deleted last admin deleted instead of re-seeding the default', () => {
+    saveAdmins([]);
+    expect(getAdmins()).toEqual([]);
+    expect(getAdmin()).toMatchObject({ id: '', pass: '' });
+  });
+
+  it('does not seed the default admin in cloud mode', () => {
+    setApiConfig('https://api.example.com', '');
+    expect(getAdmins()).toEqual([]);
+    expect(getAdmin().id).toBe('');
+    clearApiConfig();
+  });
+
   it('keeps the current admin and admin list in sync', () => {
     saveAdmin({ id: 'admin', pass: 'Password@1', name: 'Primary' });
     expect(getAdmin()).toMatchObject({ id: 'admin', name: 'Primary' });

@@ -63,6 +63,11 @@ import {
 
 const sameId = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
 
+function ownerAdmin(adminId, admins) {
+  if (adminId) return admins.find((item) => sameId(item.id, adminId)) || null;
+  return admins[0] || null;
+}
+
 function recordFor(records, date) {
   return records.find((record) => record.date === date);
 }
@@ -203,9 +208,13 @@ export default function EmployeePage() {
     setEmployee(local);
     setBlocked(local.status === 'Disabled' ? 'Your employee account has been disabled by the admin.' : '');
     const admins = getAdmins();
-    const admin = admins.find((item) => sameId(item.id, local.adminId)) || admins[0] || null;
+    const admin = ownerAdmin(local.adminId, admins);
     setOwner(admin);
-    if (admin?.status === 'Disabled') setBlocked('Your admin has been disabled. Every employee under this admin is blocked.');
+    if (local.adminId && !admin) {
+      setBlocked('The admin account that owns this employee no longer exists. Attendance is blocked.');
+    } else if (admin?.status === 'Disabled') {
+      setBlocked('Your admin has been disabled. Every employee under this admin is blocked.');
+    }
     setRecords(getRecords().filter((record) => sameId(record.empId, local.id)));
     if (isCloudMode()) pullCloud(true);
   }, [authed, session?.id, notify, pullCloud, signOut]);
@@ -224,8 +233,8 @@ export default function EmployeePage() {
     const found = getEmployees().find((item) => sameId(item.id, id));
     if (!found || found.pass !== pass) throw new ApiError('wrong');
     if (found.status === 'Disabled') throw new ApiError('disabled');
-    const admins = getAdmins();
-    const admin = admins.find((item) => sameId(item.id, found.adminId)) || admins[0] || null;
+    const admin = ownerAdmin(found.adminId, getAdmins());
+    if (found.adminId && !admin) throw new ApiError('admin-disabled');
     if (admin?.status === 'Disabled') throw new ApiError('admin-disabled');
     signIn('emp', found.id);
   };

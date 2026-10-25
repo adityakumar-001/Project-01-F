@@ -1,9 +1,12 @@
 import {
+  clearSession,
   getApiSecret,
   getApiUrl,
   getToken,
   setToken,
 } from './storage.js';
+
+export const SESSION_EXPIRED_EVENT = 'get-attended:session-expired';
 
 export class ApiError extends Error {
   constructor(code, message, status = 0) {
@@ -93,6 +96,8 @@ export async function request(path, options = {}) {
 
   if (response.status === 401) {
     setToken('');
+    clearSession();
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
     throw new ApiError(data?.error || 'unauthorized', errorMessage({ code: 'unauthorized' }), 401);
   }
 

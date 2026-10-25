@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { logout as apiLogout } from '../lib/api.js';
+import { SESSION_EXPIRED_EVENT, logout as apiLogout } from '../lib/api.js';
 import { SESSION_TTL_MS } from '../lib/constants.js';
 import { useNow } from '../lib/hooks.js';
 import {
@@ -71,6 +71,17 @@ export function AuthProvider({ children }) {
     const timer = setTimeout(expire, left + 200);
     return () => clearTimeout(timer);
   }, [session, expire]);
+
+  // A 401 from the API means the account/session no longer exists (deleted or
+  // disabled account, revoked token). Drop the local session immediately.
+  useEffect(() => {
+    const onExpired = () => {
+      clearSession();
+      setSession(null);
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, []);
 
   const signIn = useCallback((role, id, extra = {}) => {
     const next = {

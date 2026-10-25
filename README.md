@@ -54,6 +54,8 @@ For frontend development, run `npm run dev` in `frontend/` (Vite proxies `/api` 
   - Employee: own profile, attendance, and leaves.
 - Passwords are never returned by the API or rendered in tables.
 - Disabling an Admin or Employee revokes their active tokens immediately.
+- Deleting an Admin removes the account permanently (employees/attendance stay for audit) and can never be re-created by schema re-import or server restart.
+- Every Admin has a required company name. It is shown to every employee under that Admin; the Admin (or Organizer) can change it, employees cannot.
 - Per-IP login rate limiting is built in.
 
 ## Default accounts

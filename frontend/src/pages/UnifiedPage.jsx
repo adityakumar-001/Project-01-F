@@ -22,6 +22,11 @@ import EmployeePage from './EmployeePage.jsx';
 
 const sameId = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
 
+function ownerAdmin(adminId, admins) {
+  if (adminId) return admins.find((item) => sameId(item.id, adminId)) || null;
+  return admins[0] || null;
+}
+
 const PORTAL_TABS = [
   { key: 'emp', label: 'Employee', icon: '👤' },
   { key: 'adm', label: 'Admin', icon: '🛡️' },
@@ -64,8 +69,8 @@ export default function UnifiedPage() {
     const found = getEmployees().find((item) => sameId(item.id, id));
     if (!found || found.pass !== pass) throw new ApiError('wrong');
     if (found.status === 'Disabled') throw new ApiError('disabled');
-    const admins = getAdmins();
-    const admin = admins.find((item) => sameId(item.id, found.adminId)) || admins[0] || null;
+    const admin = ownerAdmin(found.adminId, getAdmins());
+    if (found.adminId && !admin) throw new ApiError('admin-disabled');
     if (admin?.status === 'Disabled') throw new ApiError('admin-disabled');
     signIn('emp', found.id);
   };
