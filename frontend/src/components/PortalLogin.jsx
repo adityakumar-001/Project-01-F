@@ -208,10 +208,21 @@ export default function PortalLogin({ role, idLabel = 'ID', idPlaceholder = 'Ent
     setStep(Math.max(1, step - 1));
   };
 
+  // Enter must press the visible step's primary action — including when the
+  // focus is on the checkbox (native form submission skips checkboxes) or on
+  // the number input. Buttons keep their own native Enter behaviour.
+  const enterAction = (handler) => (event) => {
+    if (event.key !== 'Enter' && event.code !== 'NumpadEnter') return;
+    const tag = event.target?.tagName;
+    if (tag === 'BUTTON' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    event.preventDefault();
+    handler(event);
+  };
+
   if (simple) {
     return (
       <>
-        <form onSubmit={submit} className="login-form stack">
+        <form onSubmit={submit} onKeyDown={enterAction(submit)} className="login-form stack">
           <TextField
             label={idLabel}
             required
@@ -254,7 +265,7 @@ export default function PortalLogin({ role, idLabel = 'ID', idPlaceholder = 'Ent
       </div>
 
       {step === 1 ? (
-        <form onSubmit={continueId} className="login-form stack">
+        <form onSubmit={continueId} onKeyDown={enterAction(continueId)} className="login-form stack">
           <Field label={`Step 1 · ${idLabel}`} required>
             <input
               value={id}
@@ -271,7 +282,7 @@ export default function PortalLogin({ role, idLabel = 'ID', idPlaceholder = 'Ent
       ) : null}
 
       {step === 2 ? (
-        <form onSubmit={verifyHuman} className="login-form stack">
+        <form onSubmit={verifyHuman} onKeyDown={enterAction(verifyHuman)} className="login-form stack">
           <div className="verified-id">
             <span>ID verified for this step</span>
             <strong>{normalizeId(id)}</strong>
@@ -303,7 +314,7 @@ export default function PortalLogin({ role, idLabel = 'ID', idPlaceholder = 'Ent
       ) : null}
 
       {step === 3 ? (
-        <form onSubmit={submit} className="login-form stack">
+        <form onSubmit={submit} onKeyDown={enterAction(submit)} className="login-form stack">
           <div className="verified-id">
             <span>Signing in as</span>
             <strong>{normalizeId(id)}</strong>

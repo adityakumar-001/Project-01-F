@@ -794,7 +794,7 @@ video,#previewImg{border-radius:16px!important;border:2px solid #e2e8f0!importan
 // getEmp/setEmp, getRec/setRec = JSON read/write helpers
 // FUTURE: For new data (e.g. leaves/salary), add K_NEW + get/set here
 // ============================================================
-const K_EMP='get_attend_employees', K_REC='get_attend_records', K_ADMIN='get_attend_admin', K_FB='get_attend_fbconfig', K_EMAIL='get_attend_admin_email';
+const K_EMP='get_attend_employees', K_REC='get_attend_records', K_ADMIN='get_attend_admin', K_ADMINS='get_attend_admins', K_FB='get_attend_fbconfig', K_EMAIL='get_attend_admin_email';
 function safeGet(k,fb){try{const v=localStorage.getItem(k);if(v==null)return fb;return JSON.parse(v);}catch(e){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(fb));}catch(e2){return fb;}}}
 function safeSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){try{localStorage.removeItem(k);localStorage.setItem(k,JSON.stringify(v));}catch(e2){alert('⚠️ Storage full! Please clear old photos or records, or clear data after taking a backup.');}}}
 const getEmp=()=>safeGet(K_EMP,[]);
@@ -827,6 +827,10 @@ async function cloudPull(silent){
     if(d&&d.ok){
       if(Array.isArray(d.emp))safeSet(K_EMP,d.emp);
       if(Array.isArray(d.rec))safeSet(K_REC,d.rec);
+      if(Array.isArray(d.admins)){
+        // Server list wins even when empty: a deleted admin never resurrects.
+        try{localStorage.setItem(K_ADMINS,JSON.stringify(d.admins.map(normAdminRecord)));}catch(e){}
+      }
       if(d.admin&&d.admin.id){try{localStorage.setItem(K_ADMIN,JSON.stringify(d.admin));}catch(e){}}
       try{renderAdminInfo();}catch(e){}
       try{updateSyncBadge();}catch(e){}
@@ -1021,18 +1025,48 @@ function updSesLeft(){
 function doAutoLogout(){const s=getSession();const who=(s&&s.role==='adm')?'1 hour':'15 minutes';stopSesTimers();clearSession();alert('⏰ '+who+' completed — you have been logged out automatically! Please log in again.');location.reload();}
 // ------------------------------------------------------------
 // JS STEP 1: ADMIN AUTH (default + load/save + info display)
-// DEFAULT_ADMIN = first-time login (admin / Admin@124)
-// + 4 recovery answers: mob(Q1) + movie(Q2) + birth(Q3) + school(Q4)
-// getAdmin() = load + old admin001 migration + missing-field fallback
-// setAdmin() = save + refresh UI via renderAdminInfo()
-// renderAdminInfo() = shows the current admin in header/login/change-card
-// updateAdminCreds() = updates ID+Mobile+Password+3 answers from the Change Admin card
-// FUTURE: To add admin roles/permissions, extend the fields in this same object
-// FUTURE: To add a 5th question, add the field in DEFAULT/get/set/render/update/reset
-// ------------------------------------------------------------
-const DEFAULT_ADMIN={id:'admin',pass:'Admin@124',mob:'',movie:'',birth:'',school:''};
-// STEP 1A: Admin load (falls back to '' when new fields are missing in old saved data)
-function getAdmin(){try{const a=JSON.parse(localStorage.getItem(K_ADMIN)||'null');if(a&&a.id&&a.pass){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';if(a.id==='admin001'){a.id='admin';localStorage.setItem(K_ADMIN,JSON.stringify(a));}return a;}}catch(e){}return {...DEFAULT_ADMIN};}
+// There is no built-in Admin account. The Organizer creates every Admin ID.
+const LEGACY_DEFAULT_ADMIN_ID='admin', LEGACY_DEFAULT_ADMIN_PASS='Admin@124';
+const DEFAULT_ADMIN={id:'',pass:'',mob:'',movie:'',birth:'',school:''};
+function normAdminRecord(x){
+ x=x||{};
+ return {id:String(x.id||''),pass:String(x.pass||''),mob:String(x.mob||''),movie:String(x.movie||''),birth:String(x.birth||''),school:String(x.school||''),photo:String(x.photo||''),status:(x.status==='Disabled'?'Disabled':'Enabled'),name:String(x.name||''),company:String(x.company||''),created:String(x.created||'')};
+}
+function sameAdminRecordId(a,b){return normId(a).toLowerCase()===normId(b).toLowerCase();}
+// The Organizer's list is authoritative, including an empty list.
+function getAdminsList(){
+ try{
+  const raw=localStorage.getItem(K_ADMINS);
+  if(raw!=null){
+   try{const a=JSON.parse(raw);if(Array.isArray(a))return a.map(normAdminRecord);}catch(e){}
+   return [];
+  }
+  const one=JSON.parse(localStorage.getItem(K_ADMIN)||'null');
+  if(one&&one.id){
+   const legacyPass=String(one.pass||'');
+   const legacyDefault=sameAdminRecordId(one.id,LEGACY_DEFAULT_ADMIN_ID)&&(legacyPass===''||legacyPass===LEGACY_DEFAULT_ADMIN_PASS);
+   if(!legacyDefault){
+    const arr=[normAdminRecord(Object.assign({},one,{status:one.status||'Enabled'}))];
+    try{localStorage.setItem(K_ADMINS,JSON.stringify(arr));}catch(e){}
+    return arr;
+   }
+   try{localStorage.removeItem(K_ADMIN);}catch(e){}
+  }
+ }catch(e){}
+ return [];
+}
+// STEP 1A: Admin load (blank when the saved profile no longer exists)
+function getAdmin(){
+ try{
+  const a=JSON.parse(localStorage.getItem(K_ADMIN)||'null');
+  if(a&&a.id){
+   const match=getAdminsList().find(function(x){return sameAdminRecordId(x.id,a.id);});
+   if(match)return match;
+   return normAdminRecord({});
+  }
+ }catch(e){}
+ return normAdminRecord({});
+}
 // STEP 1B: Admin save (preserving all 4 answers is mandatory)
 function setAdmin(a){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';try{localStorage.setItem(K_ADMIN,JSON.stringify(a));}catch(e){}renderAdminInfo();try{queueCloudPush();}catch(e){}}
 // STEP 1C: Admin info UI refresh (current ID/mobile/security-status + form autofill)
@@ -1316,28 +1350,22 @@ function resetAdmSteps(){
   const h=document.getElementById('humanChk');if(h)h.checked=false;
   refreshCaptcha();
 }
-// SINGLE-ADMIN RULE: Only one Admin ID is used per device here. Once a custom admin is saved, the default (admin/Admin@124) is blocked.
-// On a fresh device (no custom save), the default works. After a backup import, the restored admin works.
-function hasCustomAdmin(){try{const raw=localStorage.getItem(K_ADMIN);if(!raw)return false;const a=JSON.parse(raw);return !!(a&&a.id&&a.pass);}catch(e){return false;}}
+// Admin accounts come only from the Organizer (or the server list).
+function hasCustomAdmin(){return getAdminsList().length>0;}
 function admMatchId(id){
   const nid=normId(id).toLowerCase();
   if(!nid)return '';
-  if(hasCustomAdmin()){
-    try{const ad=getAdmin();if(nid===normId(ad.id).toLowerCase())return ad.id;}catch(e){}
-    return '';
-  }
-  try{if(nid===normId(DEFAULT_ADMIN.id).toLowerCase())return DEFAULT_ADMIN.id;}catch(e){}
-  return '';
+  const found=getAdminsList().find(function(a){return normId(a.id).toLowerCase()===nid&&a.status!=='Disabled';});
+  return found?found.id:'';
 }
 function admMatchPass(id,pass){
   const p=String(pass||'').trim();
   const nid=normId(id).toLowerCase();
-  if(hasCustomAdmin()){
-    try{const ad=getAdmin();if(nid===normId(ad.id).toLowerCase()&&p===ad.pass)return ad;}catch(e){}
-    return null;
-  }
-  try{if(nid===normId(DEFAULT_ADMIN.id).toLowerCase()&&p===DEFAULT_ADMIN.pass)return {...DEFAULT_ADMIN};}catch(e){}
-  return null;
+  if(!nid)return null;
+  const found=getAdminsList().find(function(a){
+    return normId(a.id).toLowerCase()===nid&&a.status!=='Disabled'&&String(a.pass)===p;
+  });
+  return found?Object.assign({},found):null;
 }
 function refreshCaptcha(){
   const a=Math.floor(Math.random()*9)+1, b=Math.floor(Math.random()*9)+1;
@@ -1393,6 +1421,9 @@ function employeeLogin(){
     if(idExists) return alert('❌ Wrong Password!');
     return alert('❌ Wrong ID or Password!');
   }
+  const owner=f.adminId?getAdminsList().find(function(a){return sameAdminRecordId(a.id,f.adminId);}):null;
+  if(f.adminId&&!owner) return alert('The Admin account that owns this Employee no longer exists. Login and attendance are blocked. Please contact the Organizer.');
+  if(owner&&owner.status==='Disabled') return alert('Your Admin account has been disabled by the Organizer. Login and attendance are blocked. Please contact your Admin or the Organizer.');
   curEmp=f;saveSession({role:'emp',empId:f.id,loginAt:Date.now()});showDash('emp');startSesTimers();
   if(needsPassChange(f)){openFirstLoginModal();}};
   if(isCloudMode()){cloudPull(true).then(()=>doLocalLogin()).catch(()=>doLocalLogin());return;}
@@ -1431,7 +1462,10 @@ if(!admHumanOk) return alert('❌ Please complete Step 2 verification first!');
 const p=String(document.getElementById('admPass').value||'').trim();
 if(!p) return alert('Please enter Admin Password');
 const ad=admMatchPass(admIdOk,p);
-if(ad){admStepClear();saveSession({role:'adm',loginAt:Date.now()});showDash('adm');startSesTimers();}
+if(ad){
+  try{localStorage.setItem(K_ADMIN,JSON.stringify(ad));}catch(e){}
+  admStepClear();saveSession({role:'adm',adminId:ad.id,loginAt:Date.now()});showDash('adm');startSesTimers();
+}
 else alert('❌ Wrong Admin Password!');}
 function showDash(w){
 document.getElementById('loginSection').classList.add('hidden');
@@ -1515,9 +1549,15 @@ function tryRestoreSession(){
     if(s.role==='emp'&&s.empId){
       const f=getEmp().find(x=>x.id.toLowerCase()===String(s.empId).toLowerCase());
       if(!f){clearSession();return;}
+      const owner=f.adminId?getAdminsList().find(function(a){return sameAdminRecordId(a.id,f.adminId);}):null;
+      if(f.adminId&&!owner){clearSession();alert('The Admin account that owns this Employee no longer exists. Please contact the Organizer.');return;}
+      if(owner&&owner.status==='Disabled'){clearSession();alert('Your Admin account has been disabled by the Organizer. Please contact your Admin or the Organizer.');return;}
       curEmp=f;showDash('emp');startSesTimers();
       if(needsPassChange(f)){openFirstLoginModal();}
     } else if(s.role==='adm'){
+      const wanted=normId(s.adminId||'');
+      const alive=wanted&&getAdminsList().some(function(a){return sameAdminRecordId(a.id,wanted)&&a.status!=='Disabled';});
+      if(!alive){clearSession();return;}
       showDash('adm');startSesTimers();
     }
   }catch(e){}

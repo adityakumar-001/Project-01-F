@@ -7,25 +7,36 @@
 // - Employees have Enabled/Disabled status (Admin controlled) + live password display
 // ============================================================
 (function(){
-const K_ADMINS='get_attend_admins';
-function normAdm(x){x=x||{};return {id:String(x.id||''),pass:String(x.pass||''),mob:String(x.mob||''),movie:String(x.movie||''),birth:String(x.birth||''),school:String(x.school||''),photo:String(x.photo||''),status:(x.status==='Disabled'?'Disabled':'Enabled'),name:String(x.name||''),created:String(x.created||'') };}
+const K_ADMINS='get_attend_admins', K_ADMIN='get_attend_admin';
+const LEGACY_DEFAULT_ADMIN_ID='admin', LEGACY_DEFAULT_ADMIN_PASS='Admin@124';
+function normAdm(x){x=x||{};return {id:String(x.id||''),pass:String(x.pass||''),mob:String(x.mob||''),movie:String(x.movie||''),birth:String(x.birth||''),school:String(x.school||''),photo:String(x.photo||''),status:(x.status==='Disabled'?'Disabled':'Enabled'),name:String(x.name||''),company:String(x.company||''),created:String(x.created||'') };}
+function normAdmId(s){return String(s||'').replace(/[\u200B-\u200D\uFEFF]/g,'').trim().replace(/\s+/g,'');}
+function sameAdmId(a,b){return normAdmId(a).toLowerCase()===normAdmId(b).toLowerCase();}
 function empStatus(e){return (e&&e.status==='Disabled')?'Disabled':'Enabled';}
 function isEmpDisabled(e){return empStatus(e)==='Disabled';}
 function normEmp(e){e=e||{};if(!e.status)e.status='Enabled';return e;}
 function getAdminsList(){
  try{
  const raw=localStorage.getItem(K_ADMINS);
- if(raw){const a=JSON.parse(raw);if(Array.isArray(a)&&a.length)return a.map(normAdm);}
-  const one=JSON.parse(localStorage.getItem('get_attend_admin')||'null');
-  if(one&&one.id){
-  const arr=[normAdm(Object.assign({},one,{status:'Enabled',created:(typeof todayStr==='function'?todayStr():new Date().toISOString().slice(0,10))}))];
-  try{localStorage.setItem(K_ADMINS,JSON.stringify(arr));}catch(e){}
-  return arr;
+ // An existing list is authoritative, including an empty list. This is how a
+ // deleted last Admin stays deleted instead of being replaced by a default.
+ if(raw!=null){
+  try{const a=JSON.parse(raw);if(Array.isArray(a))return a.map(normAdm);}catch(e){}
+  return [];
  }
- const seed=[normAdm({id:'admin',pass:((typeof isCloudMode==='function'&&isCloudMode())?'':'Admin@124'),created:(typeof todayStr==='function'?todayStr():new Date().toISOString().slice(0,10))})];
- try{localStorage.setItem(K_ADMINS,JSON.stringify(seed));}catch(e){}
- return seed;
- }catch(e){return [normAdm({id:'admin',pass:((typeof isCloudMode==='function'&&isCloudMode())?'':'Admin@124')})];}
+ const one=JSON.parse(localStorage.getItem(K_ADMIN)||'null');
+ if(one&&one.id){
+  const legacyPass=String(one.pass||'');
+  const legacyDefault=sameAdmId(one.id,LEGACY_DEFAULT_ADMIN_ID)&&(legacyPass===''||legacyPass===LEGACY_DEFAULT_ADMIN_PASS);
+  if(!legacyDefault){
+   const arr=[normAdm(Object.assign({},one,{status:one.status||'Enabled',created:one.created||((typeof todayStr==='function')?todayStr():new Date().toISOString().slice(0,10))}))];
+   try{localStorage.setItem(K_ADMINS,JSON.stringify(arr));}catch(e){}
+   return arr;
+  }
+  try{localStorage.removeItem(K_ADMIN);}catch(e){}
+ }
+ return [];
+ }catch(e){return [];}
 }
 function getCurrentAdminId(){
  try{
@@ -33,17 +44,17 @@ function getCurrentAdminId(){
  if(s&&s.role==='adm'&&s.adminId)return s.adminId;
  }catch(e){}
  try{if(typeof admIdOk!=='undefined'&&admIdOk)return admIdOk;}catch(e){}
- const arr=getAdminsList();
- return arr.length?arr[0].id:'admin';
+ return '';
 }
 function myAdminRec(){const id=getCurrentAdminId();const arr=getAdminsList();return arr.find(function(x){return String(x.id).toLowerCase()===String(id).toLowerCase();})||null;}
 function isAdminDisabledById(id){
  try{
   if(!id)return false;
   const raw=localStorage.getItem(K_ADMINS);
-  if(raw==null)return false;
+  if(raw==null)return false; // never synced on this device — don't lock out
   const arr=JSON.parse(raw)||[];
-  const f=arr.find(function(x){return String(x.id).toLowerCase()===String(id||'').toLowerCase();});
+  const f=arr.find(function(x){return sameAdmId(x.id,id);});
+  // Missing owner = Admin was deleted by the Organizer; keep employees blocked.
   return !f||f.status==='Disabled';
  }catch(e){return false;}
 }
@@ -66,13 +77,15 @@ window.cloudPull=async function(silent){
  if(d&&d.ok){
   if(Array.isArray(d.emp))safeSet(K_EMP,d.emp.map(normEmp));
   if(Array.isArray(d.rec))safeSet(K_REC,d.rec);
-  if(Array.isArray(d.admins)&&d.admins.length){try{localStorage.setItem(K_ADMINS,JSON.stringify(d.admins.map(normAdm)));}catch(e){}}
-  else if(d.admin&&d.admin.id){
-  const cur=getAdminsList();
-  const i=cur.findIndex(function(x){return x.id.toLowerCase()===String(d.admin.id).toLowerCase();});
-  if(i>=0)cur[i]=normAdm(Object.assign({},cur[i],d.admin));else cur.push(normAdm(d.admin));
-  try{localStorage.setItem(K_ADMINS,JSON.stringify(cur));}catch(e){}
-  try{localStorage.setItem('get_attend_admin',JSON.stringify(d.admin));}catch(e2){}
+  if(Array.isArray(d.admins)){
+   // Server list wins even when empty: never merge a deleted admin back in.
+   try{localStorage.setItem(K_ADMINS,JSON.stringify(d.admins.map(normAdm)));}catch(e){}
+  } else if(d.admin&&d.admin.id){
+   const cur=getAdminsList();
+   const i=cur.findIndex(function(x){return sameAdmId(x.id,d.admin.id);});
+   if(i>=0)cur[i]=normAdm(Object.assign({},cur[i],d.admin));else cur.push(normAdm(d.admin));
+   try{localStorage.setItem(K_ADMINS,JSON.stringify(cur));}catch(e){}
+   try{localStorage.setItem(K_ADMIN,JSON.stringify(d.admin));}catch(e2){}
   }
   try{renderAdminInfo();}catch(e){}
   try{updateSyncBadge();}catch(e){}
@@ -100,8 +113,14 @@ try{cloudPush=window.cloudPush;}catch(e){}
 window.getAdmin=function(){
  const r=myAdminRec();
  if(r)return Object.assign({},r);
-  try{const a=JSON.parse(localStorage.getItem('get_attend_admin')||'null');if(a&&a.id)return a;}catch(e){}
-  return {id:'admin',pass:'Admin@124',mob:'',movie:'',birth:'',school:''};
+ try{
+  const a=JSON.parse(localStorage.getItem(K_ADMIN)||'null');
+  if(a&&a.id){
+   const match=getAdminsList().find(function(x){return sameAdmId(x.id,a.id);});
+   if(match)return Object.assign({},match);
+  }
+ }catch(e){}
+ return {id:'',pass:'',mob:'',movie:'',birth:'',school:''};
 };
 try{getAdmin=window.getAdmin;}catch(e){}
 window.setAdmin=function(a){
@@ -122,7 +141,7 @@ window.hasCustomAdmin=function(){return getAdminsList().length>0;};
 try{hasCustomAdmin=window.hasCustomAdmin;}catch(e){}
 window.admMatchId=function(id){
  const nid=normId(id).toLowerCase();if(!nid)return '';
- const f=getAdminsList().find(function(a){return normId(a.id).toLowerCase()===nid;});
+ const f=getAdminsList().find(function(a){return normAdmId(a.id).toLowerCase()===nid&&a.status!=='Disabled';});
  if(f)return f.id;
  // Cloud mode: IDs from another device may not be cached yet. The server
  // verifies both ID and password at the password step.
@@ -131,8 +150,8 @@ window.admMatchId=function(id){
 };
 try{admMatchId=window.admMatchId;}catch(e){}
 window.admMatchPass=function(id,pass){
- const p=String(pass||'').trim();const nid=normId(id).toLowerCase();
- const f=getAdminsList().find(function(a){return normId(a.id).toLowerCase()===nid&&String(a.pass)===p;});
+ const p=String(pass||'').trim();const nid=normAdmId(id).toLowerCase();
+ const f=getAdminsList().find(function(a){return normAdmId(a.id).toLowerCase()===nid&&a.status!=='Disabled'&&String(a.pass)===p;});
  return f?Object.assign({},f):null;
 };
 try{admMatchPass=window.admMatchPass;}catch(e){}
@@ -166,6 +185,7 @@ window.adminLogin=async function(){
  if(!ad)return alert('Wrong Admin password. Please try again.');
  if(ad.status==='Disabled')return alert('This Admin ID has been disabled by the Organizer. Please contact the Organizer to enable it.');
  try{if(typeof admStepClear==='function')admStepClear();}catch(e){}
+ try{localStorage.setItem(K_ADMIN,JSON.stringify(ad));}catch(e){}
  try{ensureLegacyEmpAssigned();}catch(e){}
  saveSession({role:'adm',adminId:ad.id,loginAt:Date.now()});
  showDash('adm');startSesTimers();
@@ -182,8 +202,10 @@ window.tryRestoreSession=function(){
  if(s.role&&s.role!=='adm')return;
  if(s.role==='adm'){
   var aid=s.adminId||'';
-  if(!aid){const arr=getAdminsList();aid=arr.length?arr[0].id:'';s.adminId=aid;saveSession(s);}
-  if(aid&&isAdminDisabledById(aid)){clearSession();alert('This Admin ID has been disabled by the Organizer. Login is blocked.');return;}
+  // Old sessions without an adminId cannot be trusted to a specific account,
+  // and a deleted Admin must never fall back to the first remaining admin.
+  if(!aid){clearSession();return;}
+  if(isAdminDisabledById(aid)){clearSession();alert('This Admin ID was deleted or disabled by the Organizer. Login is blocked.');return;}
   try{ensureLegacyEmpAssigned();}catch(e){}
   showDash('adm');startSesTimers();return;
  }

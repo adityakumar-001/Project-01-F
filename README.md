@@ -58,12 +58,17 @@ For frontend development, run `npm run dev` in `frontend/` (Vite proxies `/api` 
 - Every Admin has a required company name. It is shown to every employee under that Admin; the Admin (or Organizer) can change it, employees cannot.
 - Per-IP login rate limiting is built in.
 
-## Default accounts
+## Default account
 
-Fresh installs seed one Organizer and one Admin (change both after first login):
+Fresh installs seed only the Organizer (change its password after first login):
 
 - Organizer: `organizer` / `Organizer@124`
-- Admin: `admin` / `Admin@124`
+
+No Admin account exists by default. The Organizer creates every Admin ID and
+must provide a company name for it. A deleted Admin ID is never re-seeded and
+can never sign in again. On startup the server also removes the retired
+built-in `admin` account from older databases when it still has the old default
+password.
 
 ## Frontend checks
 

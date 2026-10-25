@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as api from '../lib/api.js';
 import { ApiError, errorMessage } from '../lib/api.js';
-import { DEFAULT_ORGANIZER, STORAGE_KEYS } from '../lib/constants.js';
+import { DEFAULT_ORGANIZER } from '../lib/constants.js';
 import {
   nextAdminId,
   todayStr,
@@ -18,7 +18,7 @@ import {
   isCloudMode,
   normalizeId,
   normalizeOrganizer,
-  removeKey,
+  removeAdminProfile,
   saveAdmin as saveAdminProfile,
   saveAdmins,
   saveEmployees,
@@ -383,15 +383,16 @@ export default function OrganizerPage() {
     if (!ok) return;
     try {
       if (isCloudMode()) {
+        // Wait for the server before touching local storage: a network failure
+        // must not make the admin look deleted on this device only.
         await api.deleteAdmin(admin.id);
       }
-      // Remove locally as well (and never keep the deleted admin's profile),
-      // so a failed/partial pull cannot resurrect the account on this device.
-      const current = getAdmin();
-      setAdmins(saveAdmins(admins.filter((item) => !sameId(item.id, admin.id))));
-      if (sameId(current.id, admin.id)) removeKey(STORAGE_KEYS.admin);
+      // Remove every local trace (list entry, current profile, photo/email)
+      // so a failed or partial pull cannot resurrect the account.
+      const remaining = removeAdminProfile(admin.id);
+      setAdmins(remaining);
       if (isCloudMode()) await pullCloud(true);
-      notify(`${admin.id} deleted.`, 'success');
+      notify(`${admin.id} deleted permanently.`, 'success');
     } catch (error) {
       notify(errorMessage(error), 'error');
     }

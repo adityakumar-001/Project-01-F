@@ -22,9 +22,11 @@ export const DEFAULT_ORGANIZER = {
   photo: '',
 };
 
+// There is no built-in admin account. The organizer creates every admin ID,
+// so these blanks are only shape defaults for normalizing stored values.
 export const DEFAULT_ADMIN = {
-  id: 'admin',
-  pass: 'Admin@124',
+  id: '',
+  pass: '',
   name: '',
   company: '',
   mob: '',

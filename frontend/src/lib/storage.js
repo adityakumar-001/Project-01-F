@@ -3,9 +3,10 @@ import {
   DEFAULT_ORGANIZER,
   STORAGE_KEYS,
 } from './constants.js';
-import { todayStr } from './domain.js';
 
 const memory = new Map();
+
+const sameId = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
 
 function safeStorage() {
   try {
@@ -173,7 +174,7 @@ export function saveOrganizer(value) {
 export function getAdmins() {
   // An existing key is authoritative — even when it contains an empty array.
   // That is how a deleted last admin stays deleted instead of being replaced
-  // by the built-in default account on the next read.
+  // by a built-in default account on the next read.
   const raw = readRaw(STORAGE_KEYS.admins, null);
   if (raw !== null) {
     try {
@@ -185,21 +186,29 @@ export function getAdmins() {
     return [];
   }
 
-  // One-time migration from the legacy single-admin key.
+  // One-time migration from the legacy single-admin key. The old built-in
+  // admin/Admin@124 account is deliberately dropped instead of migrated: it
+  // must never come back after an organizer deleted it.
   const single = readJson(STORAGE_KEYS.admin, null);
   if (single && single.id) {
-    const migrated = [normalizeAdmin({ ...single, status: single.status || 'Enabled', created: single.created || todayStr() })];
-    writeJson(STORAGE_KEYS.admins, migrated);
-    return migrated;
+    const legacyPass = String(single.pass || '');
+    const legacyDefault =
+      sameId(single.id, 'admin') && (legacyPass === '' || legacyPass === 'Admin@124');
+    if (!legacyDefault) {
+      const migrated = [
+        normalizeAdmin({
+          ...single,
+          status: single.status || 'Enabled',
+        }),
+      ];
+      writeJson(STORAGE_KEYS.admins, migrated);
+      return migrated;
+    }
+    removeKey(STORAGE_KEYS.admin);
   }
 
-  // Cloud installs start empty: the server decides which admin IDs exist.
-  if (isCloudMode()) return [];
-
-  // First run of the offline app only.
-  const seed = [normalizeAdmin({ ...DEFAULT_ADMIN, created: todayStr() })];
-  writeJson(STORAGE_KEYS.admins, seed);
-  return seed;
+  // Admin accounts only ever come from the organizer (or the server).
+  return [];
 }
 
 export function saveAdmins(values) {
@@ -212,10 +221,15 @@ export function getAdmin() {
   const admins = getAdmins();
   const stored = readJson(STORAGE_KEYS.admin, null);
   if (stored && stored.id) {
-    const match = admins.find((item) => item.id.toLowerCase() === String(stored.id).toLowerCase());
+    const match = admins.find((item) => sameId(item.id, stored.id));
     if (match) return match;
+    // The saved profile no longer exists (deleted by the organizer). Never
+    // fall through to another admin on the device.
+    return normalizeAdmin({ ...DEFAULT_ADMIN, id: '', pass: '' });
   }
-  return admins[0] || normalizeAdmin({ ...DEFAULT_ADMIN, id: '', pass: '' });
+  // No saved profile: stay blank rather than borrowing another admin's
+  // identity. Callers that need a profile pass the signed-in ID explicitly.
+  return normalizeAdmin({ ...DEFAULT_ADMIN, id: '', pass: '' });
 }
 
 export function saveAdmin(value) {
@@ -223,11 +237,26 @@ export function saveAdmin(value) {
   if (!admin.id) return admin; // never create/resurrect an admin without an ID
   writeJson(STORAGE_KEYS.admin, admin);
   const admins = getAdmins();
-  const index = admins.findIndex((item) => item.id.toLowerCase() === admin.id.toLowerCase());
+  const index = admins.findIndex((item) => sameId(item.id, admin.id));
   if (index >= 0) admins[index] = { ...admins[index], ...admin };
   else admins.push(admin);
   saveAdmins(admins);
   return admin;
+}
+
+// Remove an admin from every local key: the admin list, the current profile,
+// and the loose photo/email keys. Used after the organizer deletes the ID so
+// no stale copy can sign in or come back on the next pull.
+export function removeAdminProfile(id) {
+  const wanted = normalizeId(id);
+  if (!wanted) return getAdmins();
+  const stored = readJson(STORAGE_KEYS.admin, null);
+  if (stored && sameId(stored.id, wanted)) {
+    removeKey(STORAGE_KEYS.admin);
+    removeKey(STORAGE_KEYS.adminPhoto);
+    removeKey(STORAGE_KEYS.adminEmail);
+  }
+  return saveAdmins(getAdmins().filter((item) => !sameId(item.id, wanted)));
 }
 
 export function getEmployees() {

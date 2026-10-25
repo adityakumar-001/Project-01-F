@@ -5,15 +5,36 @@
 // - Records stamp adminId (per-admin isolation, audit safe)
 (function(){
 const K_ADMINS='get_attend_admins';
-function normAdm(x){x=x||{};return {id:String(x.id||''),pass:String(x.pass||''),mob:String(x.mob||''),movie:String(x.movie||''),birth:String(x.birth||''),school:String(x.school||''),photo:String(x.photo||''),status:(x.status==='Disabled'?'Disabled':'Enabled'),name:String(x.name||''),created:String(x.created||'') };}
-function getAdminsList(){try{const raw=localStorage.getItem(K_ADMINS);if(raw){const a=JSON.parse(raw);if(Array.isArray(a))return a.map(normAdm);}}catch(e){}return [];}
+const LEGACY_DEFAULT_ADMIN_ID='admin', LEGACY_DEFAULT_ADMIN_PASS='Admin@124';
+function normAdm(x){x=x||{};return {id:String(x.id||''),pass:String(x.pass||''),mob:String(x.mob||''),movie:String(x.movie||''),birth:String(x.birth||''),school:String(x.school||''),photo:String(x.photo||''),status:(x.status==='Disabled'?'Disabled':'Enabled'),name:String(x.name||''),company:String(x.company||''),created:String(x.created||'') };}
+function sameAdmId(a,b){return String(a||'').toLowerCase()===String(b||'').toLowerCase();}
+function getAdminsList(){
+ try{
+  const raw=localStorage.getItem(K_ADMINS);
+  // Existing key is authoritative even when empty (last deleted admin stays gone).
+  if(raw!=null){const a=JSON.parse(raw);if(Array.isArray(a))return a.map(normAdm);return [];}
+  const one=JSON.parse(localStorage.getItem('get_attend_admin')||'null');
+  if(one&&one.id){
+   const legacyPass=String(one.pass||'');
+   const legacyDefault=sameAdmId(one.id,LEGACY_DEFAULT_ADMIN_ID)&&(legacyPass===''||legacyPass===LEGACY_DEFAULT_ADMIN_PASS);
+   if(!legacyDefault){
+    const arr=[normAdm(Object.assign({},one,{status:one.status||'Enabled'}))];
+    try{localStorage.setItem(K_ADMINS,JSON.stringify(arr));}catch(e){}
+    return arr;
+   }
+   try{localStorage.removeItem('get_attend_admin');}catch(e){}
+  }
+ }catch(e){}
+ return [];
+}
 function isAdminDisabledById(id){
  try{
   if(!id)return false;
   const raw=localStorage.getItem(K_ADMINS);
-  if(raw==null)return false; // never synced on this device — don't lock out
-  const arr=JSON.parse(raw)||[];
-  const f=arr.find(function(x){return String(x.id).toLowerCase()===String(id||'').toLowerCase();});
+  // Never synced on this device — don't lock out.
+  if(raw==null&&!localStorage.getItem('get_attend_admin'))return false;
+  const arr=getAdminsList();
+  const f=arr.find(function(x){return sameAdmId(x.id,id);});
   // Missing owner = Admin was deleted by the Organizer; keep employees blocked.
   return !f||f.status==='Disabled';
  }catch(e){return false;}

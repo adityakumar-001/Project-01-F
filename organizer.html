@@ -138,12 +138,12 @@ tbody tr:hover{transform:translateY(-1px)}
 </div>
 <div id="orgDash" class="hidden">
 <section data-section="dashboard"><div class="card"><h2>Dashboard - Admins Overview</h2><div class="info">The Organizer manages <b>only Admins</b>. Employee details are never shown here - only the Admin list. When an Admin is disabled, all Employees under that Admin are automatically blocked.</div><div class="stat-cards"><div class="stat"><h2 id="stTotal">0</h2><p>Total Admins</p></div><div class="stat g"><h2 id="stEnabled">0</h2><p>Enabled Admins</p></div><div class="stat r"><h2 id="stDisabled">0</h2><p>Disabled Admins</p></div></div></div></section>
-<section data-section="admins"><div class="card"><h2>Create New Admin ID</h2><div class="info">Each Admin ID is <b>separate and unique</b> - IDs never merge. Only the Organizer can create multiple Admins.</div><div class="grid2"><div><label>Admin Name *</label><input id="nAdminName" placeholder="e.g. Ramesh Admin"></div><div><label>Admin ID *</label><input id="nAdminId" placeholder="e.g. ADMIN001"></div><div><label>Password *</label><div class="pass-wrap"><input id="nAdminPass" type="password" value="Admin@124"><button type="button" class="eye-btn" onclick="togglePass('nAdminPass',this)">Show</button></div></div><div><label>Mobile</label><input id="nAdminMob" maxlength="10" placeholder="10-digit mobile"></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-blue" style="flex:3" onclick="createAdmin()">Create Admin ID</button><button class="btn btn-grey" style="flex:1" onclick="autofillAdminId(true)">Suggest ID</button></div></div><div class="card"><h2>All Admins - Edit / Enable / Disable / Delete</h2><div class="info"><b>Edit</b> updates name, ID, password and mobile. Passwords are never displayed. If you change the Admin ID, its Employees and records move to the new ID automatically. <b>Enable / Disable</b> controls login access (disabling an Admin also blocks all its Employees). <b>Delete</b> is separate - a warning popup appears before deletion.</div><div class="table-wrap"><table id="adminTable"><thead><tr><th>Admin ID</th><th>Name</th><th>Password</th><th>Mobile</th><th>Status</th><th>Created</th><th>Enable / Disable</th><th>Edit</th><th>Delete</th></tr></thead><tbody></tbody></table></div></div></section>
+<section data-section="admins"><div class="card"><h2>Create New Admin ID</h2><div class="info">Each Admin ID is <b>separate and unique</b> - IDs never merge. Only the Organizer can create multiple Admins. No default admin exists: every Admin ID must be created here.</div><div class="grid2"><div><label>Admin Name *</label><input id="nAdminName" placeholder="e.g. Ramesh Admin"></div><div><label>Company Name *</label><input id="nAdminCompany" maxlength="150" placeholder="e.g. MAIPL Retail Pvt Ltd"></div><div><label>Admin ID *</label><input id="nAdminId" placeholder="e.g. ADMIN001"></div><div><label>Password *</label><div class="pass-wrap"><input id="nAdminPass" type="password" placeholder="At least 8 characters"><button type="button" class="eye-btn" onclick="togglePass('nAdminPass',this)">Show</button></div></div><div><label>Mobile</label><input id="nAdminMob" maxlength="10" placeholder="10-digit mobile"></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-blue" style="flex:3" onclick="createAdmin()">Create Admin ID</button><button class="btn btn-grey" style="flex:1" onclick="autofillAdminId(true)">Suggest ID</button></div></div><div class="card"><h2>All Admins - Edit / Enable / Disable / Delete</h2><div class="info"><b>Edit</b> updates the company, name, ID, password and mobile. Passwords are never displayed. If you change the Admin ID, its Employees and records move to the new ID automatically. <b>Enable / Disable</b> controls login access (disabling an Admin also blocks all its Employees). <b>Delete</b> is permanent - the Admin can never sign in again.</div><div class="table-wrap"><table id="adminTable"><thead><tr><th>Admin ID</th><th>Name</th><th>Company</th><th>Password</th><th>Mobile</th><th>Status</th><th>Created</th><th>Enable / Disable</th><th>Edit</th><th>Delete</th></tr></thead><tbody></tbody></table></div></div></section>
 <section data-section="settings"><div class="card"><h2>Change Organizer ID and Password</h2><div class="info">Current Organizer ID: <b id="curOrgIdShow">organizer</b> | Mobile: <b id="curOrgMobShow">-</b> | Security Questions: <b id="curOrgSecShow">-</b></div><div class="grid2"><div><label>Current Password *</label><div class="pass-wrap"><input id="cOrgCurPass" type="password" placeholder="Enter current password"><button type="button" class="eye-btn" onclick="togglePass('cOrgCurPass',this)">Show</button></div></div><div><label>New Organizer ID *</label><input id="cOrgId" placeholder="e.g. organizer"></div><div><label>Q1: Organizer Mobile *</label><input id="cOrgMob" maxlength="10" placeholder="10-digit mobile"></div><div><label>New Password *</label><div class="pass-wrap"><input id="cOrgNewPass" type="password" placeholder="Enter new password"><button type="button" class="eye-btn" onclick="togglePass('cOrgNewPass',this)">Show</button></div></div><div style="grid-column:1/-1"><label>Confirm New Password *</label><div class="pass-wrap"><input id="cOrgConfPass" type="password" placeholder="Confirm new password"><button type="button" class="eye-btn" onclick="togglePass('cOrgConfPass',this)">Show</button></div></div></div><div class="info" style="margin-top:14px"><b>Security Questions (compulsory):</b></div><div class="grid2"><div><label>Q2: Favorite Movie *</label><input id="cOrgMovie" placeholder="e.g. Sholay"></div><div><label>Q3: Birth Place *</label><input id="cOrgBirth" placeholder="e.g. Mumbai"></div><div style="grid-column:1/-1"><label>Q4: Class 10th School *</label><input id="cOrgSchool" placeholder="e.g. St. Mary School"></div></div><button class="btn btn-orange" onclick="updateOrganizerCreds()">Update Organizer ID and Password</button><div style="margin-top:14px"><label>Backend API URL *</label><input id="apiUrlInput" placeholder="e.g. https://get-attended.onrender.com"><label>API Secret</label><div class="pass-wrap"><input id="apiSecretInput" type="password" placeholder="API_SECRET"><button type="button" class="eye-btn" onclick="togglePass('apiSecretInput',this)">Show</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-green btn-small" onclick="saveApiConfig()">Save and Connect</button><button class="btn btn-grey btn-small" onclick="clearApiConfig()">Cloud OFF</button><button class="btn btn-orange btn-small" onclick="syncNow()">Save to Cloud</button></div><div id="cloudStatus" style="font-size:13px;margin-top:8px"></div></div></div></section>
 </div>
 <div id="forgotModal" class="modal hidden"><div class="modal-box" style="text-align:left"><h3 style="text-align:center">Forgot Organizer Password</h3><p style="text-align:center">All answers must match.</p><label>Organizer ID *</label><input id="fOrgId" placeholder="organizer"><label>Q1: Mobile *</label><input id="fOrgMob" maxlength="10" placeholder="10-digit mobile"><label>Q2: Favorite Movie *</label><input id="fOrgMovie" placeholder="movie"><label>Q3: Birth Place *</label><input id="fOrgBirth" placeholder="birth place"><label>Q4: School *</label><input id="fOrgSchool" placeholder="school"><label>New Password *</label><div class="pass-wrap"><input id="fOrgNewPass" type="password" placeholder="new password"><button type="button" class="eye-btn" onclick="togglePass('fOrgNewPass',this)">Show</button></div><label>Confirm New Password *</label><div class="pass-wrap"><input id="fOrgConfPass" type="password" placeholder="confirm"><button type="button" class="eye-btn" onclick="togglePass('fOrgConfPass',this)">Show</button></div><div class="modal-btns"><button class="btn btn-grey" onclick="closeForgotModal()">Cancel</button><button class="btn btn-green" onclick="resetOrganizerPassword()">Reset Password</button></div></div></div>
 <div id="orgDelModal" class="modal hidden"><div class="modal-box"><h3>Warning - Delete Admin?</h3><p id="orgDelText">Do you want to permanently delete this Admin ID? Its Employees will not be able to log in.</p><div class="modal-btns"><button class="btn btn-grey" onclick="closeOrgDelModal()">Cancel</button><button class="btn btn-red" onclick="confirmOrgDel()">Yes, Delete Permanently</button></div></div></div>
-<div id="orgEditModal" class="modal hidden"><div class="modal-box" style="text-align:left;max-width:520px"><h3 style="text-align:center">Edit Admin</h3><p style="text-align:center">Update admin details. If you change the Admin ID, its Employees and records will move to the new ID automatically.</p><input id="eaOldId" type="hidden"><div class="grid2"><div><label>Admin ID * (correction allowed)</label><input id="eaId" placeholder="e.g. ADMIN001"></div><div><label>Admin Name *</label><input id="eaName" placeholder="e.g. Ramesh Admin"></div><div><label>New Password (blank = keep current)</label><div class="pass-wrap"><input id="eaPass" type="password" placeholder="Leave blank to keep current"><button type="button" class="eye-btn" onclick="togglePass('eaPass',this)">Show</button></div></div><div><label>Mobile</label><input id="eaMob" maxlength="10" placeholder="10-digit mobile"></div></div><div class="modal-btns" style="margin-top:14px"><button class="btn btn-grey" onclick="closeEditAdmin()">Cancel</button><button class="btn btn-green" onclick="saveEditAdmin()">Save Changes</button></div></div></div>
+<div id="orgEditModal" class="modal hidden"><div class="modal-box" style="text-align:left;max-width:520px"><h3 style="text-align:center">Edit Admin</h3><p style="text-align:center">Update admin details. If you change the Admin ID, its Employees and records will move to the new ID automatically.</p><input id="eaOldId" type="hidden"><div class="grid2"><div><label>Admin ID * (correction allowed)</label><input id="eaId" placeholder="e.g. ADMIN001"></div><div><label>Admin Name *</label><input id="eaName" placeholder="e.g. Ramesh Admin"></div><div><label>Company Name *</label><input id="eaCompany" maxlength="150" placeholder="e.g. MAIPL Retail Pvt Ltd"></div><div><label>New Password (blank = keep current)</label><div class="pass-wrap"><input id="eaPass" type="password" placeholder="Leave blank to keep current"><button type="button" class="eye-btn" onclick="togglePass('eaPass',this)">Show</button></div></div><div><label>Mobile</label><input id="eaMob" maxlength="10" placeholder="10-digit mobile"></div></div><div class="modal-btns" style="margin-top:14px"><button class="btn btn-grey" onclick="closeEditAdmin()">Cancel</button><button class="btn btn-green" onclick="saveEditAdmin()">Save Changes</button></div></div></div>
 </div>
 </div>
 </div>
@@ -157,10 +157,12 @@ const K_ORG='get_attend_organizer', K_ADMINS='get_attend_admins', K_ADMIN='get_a
 function safeGet(k,fb){try{const v=localStorage.getItem(k);if(v==null)return fb;return JSON.parse(v);}catch(e){return fb;}}
 function safeSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){alert('Storage full. Please free up space.');}}
 const DEFAULT_ORGANIZER={id:'organizer',pass:'Organizer@124',mob:'',movie:'',birth:'',school:''};
-const DEFAULT_ADMIN_ONE={id:'admin',pass:'Admin@124',mob:'',movie:'',birth:'',school:'',status:'Enabled',name:''};
+// The old built-in admin (admin / Admin@124) is retired. Only the organizer
+// can create admin IDs; a deleted ID must never be re-seeded.
+const LEGACY_DEFAULT_ADMIN_ID='admin', LEGACY_DEFAULT_ADMIN_PASS='Admin@124';
 function getOrganizer(){try{const a=JSON.parse(localStorage.getItem(K_ORG)||'null');if(a&&a.id){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';return a;}}catch(e){}return Object.assign({},DEFAULT_ORGANIZER);}
 function setOrganizer(a){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';try{localStorage.setItem(K_ORG,JSON.stringify(a));}catch(e){}renderOrgInfo();try{queueCloudPush();}catch(e){}}
-function normAdm(x){x=x||{};return {id:String(x.id||''),pass:String(x.pass||''),mob:String(x.mob||''),movie:String(x.movie||''),birth:String(x.birth||''),school:String(x.school||''),photo:String(x.photo||''),status:(x.status==='Disabled'?'Disabled':'Enabled'),name:String(x.name||''),created:String(x.created||'') };}
+function normAdm(x){x=x||{};return {id:String(x.id||''),pass:String(x.pass||''),mob:String(x.mob||''),movie:String(x.movie||''),birth:String(x.birth||''),school:String(x.school||''),photo:String(x.photo||''),status:(x.status==='Disabled'?'Disabled':'Enabled'),name:String(x.name||''),company:String(x.company||''),created:String(x.created||'') };}
 function todayStr(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function normId(s){return String(s||'').replace(/[\u200B-\u200D\uFEFF]/g,'').trim().replace(/\s+/g,'');}
 function togglePass(id,btn){try{const el=document.getElementById(id);if(!el)return;const show=el.type==='password';el.type=show?'text':'password';if(btn)btn.textContent=show?'Hide':'Show';}catch(e){}}
@@ -196,20 +198,26 @@ scrubLocalSecrets();
 function getAdmins(){
   try{
     var arr=safeGet(K_ADMINS,null);
-    if(Array.isArray(arr)&&arr.length)return arr.map(normAdm);
+    // An existing key is authoritative, including an empty list. This is how
+    // the last deleted admin stays deleted instead of being re-seeded.
+    if(Array.isArray(arr))return arr.map(normAdm);
+    // One-time migration from the old single-admin key. Drop the retired
+    // built-in admin/Admin@124 account instead of migrating it.
     try{
       const one=JSON.parse(localStorage.getItem(K_ADMIN)||'null');
-      if(one&&one.id&&one.pass){
-        arr=[{id:one.id,pass:one.pass,mob:one.mob||'',movie:one.movie||'',birth:one.birth||'',school:one.school||'',status:'Enabled',name:'',created:todayStr()}];
-        safeSet(K_ADMINS,arr);
-        return arr;
+      if(one&&one.id){
+        const legacyPass=String(one.pass||'');
+        const legacyDefault=normId(one.id).toLowerCase()===LEGACY_DEFAULT_ADMIN_ID&&(legacyPass===''||legacyPass===LEGACY_DEFAULT_ADMIN_PASS);
+        if(!legacyDefault){
+          arr=[normAdm({id:one.id,pass:one.pass,mob:one.mob,movie:one.movie,birth:one.birth,school:one.school,status:'Enabled',name:one.name,company:one.company,created:one.created||todayStr()})];
+          safeSet(K_ADMINS,arr);
+          return arr;
+        }
+        localStorage.removeItem(K_ADMIN);
       }
     }catch(e){}
-    if(Array.isArray(arr))return arr.map(normAdm);
-    arr=[Object.assign({},DEFAULT_ADMIN_ONE,{pass:(isCloudMode()?'':DEFAULT_ADMIN_ONE.pass),created:todayStr()})];
-    safeSet(K_ADMINS,arr);
-    return arr;
-  }catch(e){return [Object.assign({},DEFAULT_ADMIN_ONE,{pass:(isCloudMode()?'':DEFAULT_ADMIN_ONE.pass),created:todayStr()})];}
+    return [];
+  }catch(e){return [];}
 }
 function setAdmins(a){safeSet(K_ADMINS,a.map(normAdm));try{queueCloudPush();}catch(e){}}
 async function cloudPull(silent){
@@ -219,9 +227,18 @@ async function cloudPull(silent){
     // Fallback for an older backend that only has /api/pull.
     if(!(d&&d.ok))d=await apiFetch('/api/pull');
     if(d&&d.ok){
-      if(Array.isArray(d.admins)&&d.admins.length)safeSet(K_ADMINS,d.admins.map(normAdm));
-      else if(d.admin&&d.admin.id){const cur=getAdmins();if(!cur.some(function(a){return a.id.toLowerCase()===String(d.admin.id).toLowerCase();})){cur.push(normAdm(d.admin));safeSet(K_ADMINS,cur);}}
+      // The server list wins, even when it is empty. Never merge d.admin back
+      // in: that is what resurrected a deleted admin in the old version.
+      if(Array.isArray(d.admins)){
+        safeSet(K_ADMINS,d.admins.map(normAdm));
+        try{
+          const one=safeGet(K_ADMIN,null);
+          if(one&&one.id&&!d.admins.some(function(a){return normId(a.id).toLowerCase()===normId(one.id).toLowerCase();}))localStorage.removeItem(K_ADMIN);
+        }catch(e){}
+      }
       if(d.organizer&&d.organizer.id){try{localStorage.setItem(K_ORG,JSON.stringify(d.organizer));}catch(e){}}
+      try{renderAdminTableOrg();}catch(e){}
+      try{updateOrgStats();}catch(e){}
       try{renderOrgInfo();}catch(e){}
       try{updateSyncBadge();}catch(e){}
       return true;
@@ -324,29 +341,33 @@ function nextAdminId(){const arr=getAdmins();let max=0;arr.forEach(function(a){c
 function autofillAdminId(force){const el=document.getElementById('nAdminId');if(!el)return;if(force){el.value=nextAdminId();return;}if(!el.value.trim())el.value=nextAdminId();}
 async function createAdmin(){
   const name=document.getElementById('nAdminName').value.trim();
-  const id=document.getElementById('nAdminId').value.trim();
+  const company=document.getElementById('nAdminCompany').value.trim();
+  const id=normId(document.getElementById('nAdminId').value);
   const p=document.getElementById('nAdminPass').value.trim();
   const m=document.getElementById('nAdminMob').value.trim();
-  if(!name||!id||!p)return alert('Name, Admin ID and Password are required.');
+  if(!name||!company||!id||!p)return alert('Admin Name, Company Name, Admin ID and Password are required.');
+  if(company.length>150)return alert('Company Name must be 150 characters or fewer.');
   if(id.length<3)return alert('Admin ID must be at least 3 characters.');
   if(p.length<8)return alert('Password must be at least 8 characters.');
   if(m&&!/^\d{10}$/.test(m))return alert('Mobile number must be 10 digits.');
   const arr=getAdmins();
-  if(arr.some(function(x){return normId(x.id).toLowerCase()===normId(id).toLowerCase();}))return alert('This Admin ID already exists. Please use a different unique ID.');
+  if(arr.some(function(x){return normId(x.id).toLowerCase()===id.toLowerCase();}))return alert('This Admin ID already exists. Please use a different unique ID.');
+  let r=null;
   if(isCloudMode()){
-    let r=null;
-    try{r=await apiFetch('/api/admins',{method:'POST',body:JSON.stringify({id:id,name:name,pass:p,mob:m,created:todayStr()})});}
+    try{r=await apiFetch('/api/admins',{method:'POST',body:JSON.stringify({id:id,name:name,company:company,pass:p,mob:m,created:todayStr()})});}
     catch(e){return alert('Cloud create failed: '+e.message);}
     if(!(r&&r.ok)){
       if((r&&r.error)==='duplicate')return alert('This Admin ID already exists. Please use a different unique ID.');
       if((r&&r.error)==='password-too-short')return alert('Password must be at least 8 characters.');
+      if((r&&r.error)==='company-required')return alert('Company Name is required.');
       return alert('Could not create the Admin on the server ('+((r&&r.error)||'unknown')+').');
     }
   }
-  arr.push({id:id,pass:isCloudMode()?'':p,mob:m,movie:'',birth:'',school:'',status:'Enabled',name:name,created:todayStr()});
+  const created=(r&&r.admin)?normAdm(r.admin):{id:id,pass:isCloudMode()?'':p,mob:m,movie:'',birth:'',school:'',status:'Enabled',name:name,company:company,created:todayStr()};
+  created.pass=isCloudMode()?'':p;
+  arr.push(created);
   setAdmins(arr);
-  ['nAdminName','nAdminId','nAdminMob'].forEach(function(i){document.getElementById(i).value='';});
-  document.getElementById('nAdminPass').value='Admin@124';
+  ['nAdminName','nAdminCompany','nAdminId','nAdminMob','nAdminPass'].forEach(function(i){document.getElementById(i).value='';});
   renderAdminTableOrg();updateOrgStats();
   alert('Admin ID created successfully. ID: '+id);
 }
@@ -374,24 +395,36 @@ function askDelAdmin(id){
   document.getElementById('orgDelModal').classList.remove('hidden');
 }
 function closeOrgDelModal(){pendingDelId='';document.getElementById('orgDelModal').classList.add('hidden');}
-function confirmOrgDel(){
+async function confirmOrgDel(){
   if(!pendingDelId)return closeOrgDelModal();
-  setAdmins(getAdmins().filter(function(x){return String(x.id).toLowerCase()!==String(pendingDelId).toLowerCase();}));
-  if(isCloudMode()){apiFetch('/api/admins/'+encodeURIComponent(pendingDelId),{method:'DELETE'}).catch(function(e){console.log(e.message);});}
   const doneId=pendingDelId;
-  closeOrgDelModal();renderAdminTableOrg();updateOrgStats();
-  alert('Admin '+doneId+' deleted permanently.');
+  if(isCloudMode()){
+    let r=null;
+    try{r=await apiFetch('/api/admins/'+encodeURIComponent(doneId),{method:'DELETE'});}
+    catch(e){return alert('Could not delete the Admin from the server: '+e.message+'\nThe account was NOT deleted. Please try again.');}
+    if(!(r&&r.ok)){
+      return alert('Could not delete the Admin from the server ('+((r&&r.error)||'unknown')+').\nThe account was NOT deleted. Please try again.');
+    }
+  }
+  // Server confirmed (or this is device-only mode): remove every local trace.
+  setAdmins(getAdmins().filter(function(x){return String(x.id).toLowerCase()!==String(doneId).toLowerCase();}));
+  try{const one=safeGet(K_ADMIN,null);if(one&&normId(one.id).toLowerCase()===normId(doneId).toLowerCase())localStorage.removeItem(K_ADMIN);}catch(e){}
+  try{localStorage.removeItem('get_attend_admin_photo');}catch(e){}
+  closeOrgDelModal();
+  if(isCloudMode()){try{await cloudPull(true);}catch(e){}}
+  renderAdminTableOrg();updateOrgStats();
+  alert('Admin '+doneId+' deleted permanently. This ID can no longer sign in.');
 }
 function renderAdminTableOrg(){
   const tb=document.querySelector('#adminTable tbody');if(!tb)return;tb.innerHTML='';
   const arr=getAdmins();
-  if(!arr.length){tb.innerHTML='<tr><td colspan="9" style="color:#64748b">No Admins found. Create one above.</td></tr>';return;}
+  if(!arr.length){tb.innerHTML='<tr><td colspan="10" style="color:#64748b">No Admins found. Create one above.</td></tr>';return;}
   arr.forEach(function(a){
     const st=a.status==='Disabled'?'<span class="badge disabled">Disabled</span>':'<span class="badge enabled">Enabled</span>';
     const tBtn=a.status==='Disabled'
       ?('<button class="btn btn-green btn-small" onclick="toggleAdmin(\''+a.id+'\')">Enable</button>')
       :('<button class="btn btn-orange btn-small" onclick="toggleAdmin(\''+a.id+'\')">Disable</button>');
-    tb.innerHTML+=('<tr><td><b>'+a.id+'</b></td><td>'+(a.name||'-')+'</td><td><span title="Hidden for security">••••••••</span></td><td>'+(a.mob||'-')+'</td><td>'+st+'</td><td>'+(a.created||'-')+'</td><td>'+tBtn+'</td><td><button class="btn btn-blue btn-small" onclick="openEditAdmin(\''+a.id+'\')">Edit</button></td><td><button class="btn btn-red btn-small" onclick="askDelAdmin(\''+a.id+'\')">Delete</button></td></tr>');
+    tb.innerHTML+=('<tr><td><b>'+a.id+'</b></td><td>'+(a.name||'-')+'</td><td>'+(a.company||'-')+'</td><td><span title="Hidden for security">••••••••</span></td><td>'+(a.mob||'-')+'</td><td>'+st+'</td><td>'+(a.created||'-')+'</td><td>'+tBtn+'</td><td><button class="btn btn-blue btn-small" onclick="openEditAdmin(\''+a.id+'\')">Edit</button></td><td><button class="btn btn-red btn-small" onclick="askDelAdmin(\''+a.id+'\')">Delete</button></td></tr>');
   });
 }
 function openEditAdmin(id){
@@ -400,6 +433,7 @@ function openEditAdmin(id){
   document.getElementById('eaOldId').value=a.id;
   document.getElementById('eaId').value=a.id;
   document.getElementById('eaName').value=a.name||'';
+  document.getElementById('eaCompany').value=a.company||'';
   document.getElementById('eaPass').value='';
   document.getElementById('eaMob').value=a.mob||'';
   document.getElementById('orgEditModal').classList.remove('hidden');
@@ -420,10 +454,11 @@ function migrateLocalAdminId(oldId,newId){
 }
 async function saveEditAdmin(){
   const gv=function(id){return ((document.getElementById(id)||{}).value||'').trim();};
-  const oldId=gv('eaOldId'), nid=gv('eaId'), nm=gv('eaName'), np=gv('eaPass'), mb=gv('eaMob');
+  const oldId=gv('eaOldId'), nid=normId(gv('eaId')), nm=gv('eaName'), cp=gv('eaCompany'), np=gv('eaPass'), mb=gv('eaMob');
   if(!oldId)return closeEditAdmin();
-  if(!nid||!nm)return alert('Admin ID and Name are required.');
-  if(!isCloudMode()&&!np)return alert('Admin ID, Name and Password are required.');
+  if(!nid||!nm||!cp)return alert('Admin ID, Name and Company Name are required.');
+  if(cp.length>150)return alert('Company Name must be 150 characters or fewer.');
+  if(!isCloudMode()&&!np)return alert('Admin ID, Name, Company Name and Password are required.');
   if(nid.length<3)return alert('Admin ID must be at least 3 characters.');
   if(np&&np.length<8)return alert('Password must be at least 8 characters.');
   if(mb&&!/^\d{10}$/.test(mb))return alert('Mobile number must be 10 digits.');
@@ -434,16 +469,17 @@ async function saveEditAdmin(){
   const idChanged=String(arr[idx].id)!==nid;
   if(isCloudMode()){
     try{
-      const r=await apiFetch('/api/admins/'+encodeURIComponent(arr[idx].id),{method:'PUT',body:JSON.stringify({newId:nid,name:nm,pass:np||undefined,mob:mb})});
+      const r=await apiFetch('/api/admins/'+encodeURIComponent(arr[idx].id),{method:'PUT',body:JSON.stringify({newId:nid,name:nm,company:cp,pass:np||undefined,mob:mb})});
       if(!(r&&r.ok)){
         if((r&&r.error)==='duplicate')return alert('This Admin ID already exists on the server. Please use a different unique ID.');
         if((r&&r.error)==='not-found')return alert('Admin not found on the server. Please sync and try again.');
         if((r&&r.error)==='password-too-short')return alert('Password must be at least 8 characters.');
+        if((r&&r.error)==='company-required')return alert('Company Name is required.');
         return alert('Could not update Admin on the server ('+((r&&r.error)||'unknown')+').');
       }
     }catch(e){return alert('Could not update Admin on the server: '+e.message);}
   }
-  arr[idx].id=nid;arr[idx].name=nm;if(np)arr[idx].pass=isCloudMode()?'':np;arr[idx].mob=mb;
+  arr[idx].id=nid;arr[idx].name=nm;arr[idx].company=cp;if(np)arr[idx].pass=isCloudMode()?'':np;arr[idx].mob=mb;
   setAdmins(arr);
   if(idChanged)migrateLocalAdminId(oldId,nid);
   closeEditAdmin();renderAdminTableOrg();updateOrgStats();
@@ -536,7 +572,7 @@ document.addEventListener('keydown',function(e){
   const t=e.target||{};if(t.tagName==='BUTTON'||t.tagName==='TEXTAREA'||t.tagName==='SELECT')return;
   const id=t.id||'';
   if(id==='orgId'){e.preventDefault();orgNextToHuman();}
-  else if(id==='captchaAns'){e.preventDefault();orgVerifyHuman();}
+  else if(id==='captchaAns'||id==='humanChk'){e.preventDefault();orgVerifyHuman();}
   else if(id==='orgPass'){e.preventDefault();organizerLogin();}
 });
 refreshCaptcha();renderOrgInfo();updateSyncBadge();

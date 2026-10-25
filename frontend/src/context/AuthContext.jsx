@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { SESSION_EXPIRED_EVENT, logout as apiLogout } from '../lib/api.js';
-import { SESSION_TTL_MS } from '../lib/constants.js';
+import { SESSION_TTL_MS, STORAGE_KEYS } from '../lib/constants.js';
 import { useNow } from '../lib/hooks.js';
 import {
   clearSession,
   clearToken,
   getAdmin,
+  getAdmins,
+  getEmployees,
   getOrganizer,
   getSession,
   isCloudMode,
@@ -25,6 +27,31 @@ const ROLE_MAP = {
   organizer: 'org',
 };
 
+const sameId = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
+
+// The local account list is the source of truth for offline sign-ins. Once the
+// organizer deletes or disables an admin, an already-open session must stop.
+function sessionAccountActive(session) {
+  if (!session) return false;
+  if (session.role === 'org') return true;
+  if (session.role === 'adm') {
+    const admin = getAdmins().find((item) => sameId(item.id, session.id));
+    return Boolean(admin && admin.status !== 'Disabled');
+  }
+  if (session.role === 'emp') {
+    const employee = getEmployees().find((item) => sameId(item.id, session.id));
+    if (!employee || employee.status === 'Disabled') return false;
+    // In cloud mode the employee profile can arrive before the owner admin
+    // snapshot; the server already blocks login for a deleted owner.
+    if (!isCloudMode() && employee.adminId) {
+      const owner = getAdmins().find((item) => sameId(item.id, employee.adminId));
+      if (!owner || owner.status === 'Disabled') return false;
+    }
+    return true;
+  }
+  return false;
+}
+
 function readSession() {
   const raw = getSession();
   if (!raw) return null;
@@ -37,7 +64,12 @@ function readSession() {
     clearSession();
     return null;
   }
-  return { ...raw, role, id, loginAt: Number(raw.loginAt) };
+  const session = { ...raw, role, id, loginAt: Number(raw.loginAt) };
+  if (!sessionAccountActive(session)) {
+    clearSession();
+    return null;
+  }
+  return session;
 }
 
 export function AuthProvider({ children }) {
@@ -82,6 +114,40 @@ export function AuthProvider({ children }) {
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
   }, []);
+
+  // Re-check the local account list while a session is open. `storage` fires
+  // for other tabs, `focus` catches changes made while this tab was hidden,
+  // and the interval covers a deletion made in another tab that never fires
+  // focus (for example two side-by-side windows).
+  useEffect(() => {
+    if (!session) return undefined;
+    const validate = () => {
+      if (!sessionAccountActive(session)) {
+        clearSession();
+        clearToken();
+        setSession(null);
+        notify('This account was deleted or disabled. Please sign in again.', 'warning', 6000);
+      }
+    };
+    const onStorage = (event) => {
+      if (
+        event.key &&
+        ![STORAGE_KEYS.admins, STORAGE_KEYS.employees, STORAGE_KEYS.session].includes(event.key)
+      ) {
+        return;
+      }
+      validate();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('focus', validate);
+    const timer = setInterval(validate, 15000);
+    validate();
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('focus', validate);
+      clearInterval(timer);
+    };
+  }, [session, notify]);
 
   const signIn = useCallback((role, id, extra = {}) => {
     const next = {

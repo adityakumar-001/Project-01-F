@@ -57,14 +57,18 @@ describe('offline sign-in flows', () => {
     expect(await screen.findByRole('heading', { name: 'Organizer dashboard' })).toBeInTheDocument();
   });
 
-  it('signs the default admin in and shows the admin dashboard', async () => {
+  it('signs an organizer-created admin in and shows the admin dashboard', async () => {
+    saveAdmins([
+      { id: 'ADMIN001', name: 'Ramesh', company: 'Acme Retail', pass: 'Password@1', status: 'Enabled' },
+    ]);
     const { container } = renderAt('/admin');
-    await signInStepped(container, 'admin', 'Admin@124', /Admin login/i);
+    await signInStepped(container, 'ADMIN001', 'Password@1', /Admin login/i);
     expect(await screen.findByRole('heading', { name: 'Attendance dashboard' })).toBeInTheDocument();
   });
 
   it('signs an employee in with a locally saved profile', async () => {
-    saveEmployees([{ id: 'EMP001', name: 'Asha', pass: 'Employee@1', adminId: 'admin', status: 'Enabled' }]);
+    saveAdmins([{ id: 'ADMIN001', name: 'Ramesh', company: 'Acme Retail', pass: '', status: 'Enabled' }]);
+    saveEmployees([{ id: 'EMP001', name: 'Asha', pass: 'Employee@1', adminId: 'ADMIN001', status: 'Enabled' }]);
     const { container } = renderAt('/employee');
     const inputs = container.querySelectorAll('form.login-form input');
     fireEvent.change(inputs[0], { target: { value: 'EMP001' } });
@@ -74,7 +78,8 @@ describe('offline sign-in flows', () => {
   });
 
   it('signs an employee in through the unified portal', async () => {
-    saveEmployees([{ id: 'EMP001', name: 'Asha', pass: 'Employee@1', adminId: 'admin', status: 'Enabled' }]);
+    saveAdmins([{ id: 'ADMIN001', name: 'Ramesh', company: 'Acme Retail', pass: '', status: 'Enabled' }]);
+    saveEmployees([{ id: 'EMP001', name: 'Asha', pass: 'Employee@1', adminId: 'ADMIN001', status: 'Enabled' }]);
     const { container } = renderAt('/legacy-unified');
     const inputs = container.querySelectorAll('form.login-form input');
     fireEvent.change(inputs[0], { target: { value: 'EMP001' } });
@@ -103,9 +108,28 @@ describe('offline sign-in flows', () => {
     expect(screen.queryByRole('heading', { name: 'Attendance dashboard' })).not.toBeInTheDocument();
   });
 
+  it('verifies the human step and signs in when Enter is pressed', async () => {
+    const { container } = renderAt('/organizer');
+    const idInput = container.querySelector('form.login-form input');
+    fireEvent.change(idInput, { target: { value: 'organizer' } });
+    fireEvent.keyDown(idInput, { key: 'Enter', code: 'Enter' });
+
+    const captcha = container.querySelector('.captcha-box span').textContent;
+    const [a, b] = captcha.match(/\d+/g).map(Number);
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: String(a + b) } });
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+    fireEvent.keyDown(checkbox, { key: 'Enter', code: 'Enter' });
+
+    const password = screen.getByPlaceholderText('Organizer password');
+    fireEvent.change(password, { target: { value: 'Organizer@124' } });
+    fireEvent.keyDown(password, { key: 'Enter', code: 'Enter' });
+    expect(await screen.findByRole('heading', { name: 'Organizer dashboard' })).toBeInTheDocument();
+  });
+
   it('blocks an employee when its owner admin was deleted', async () => {
     saveAdmins([]);
-    saveEmployees([{ id: 'EMP001', name: 'Asha', pass: 'Employee@1', adminId: 'admin', status: 'Enabled' }]);
+    saveEmployees([{ id: 'EMP001', name: 'Asha', pass: 'Employee@1', adminId: 'ADMIN001', status: 'Enabled' }]);
     const { container } = renderAt('/employee');
     const inputs = container.querySelectorAll('form.login-form input');
     fireEvent.change(inputs[0], { target: { value: 'EMP001' } });

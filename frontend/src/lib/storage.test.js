@@ -10,6 +10,7 @@ import {
   isCloudMode,
   normalizeId,
   readRaw,
+  removeAdminProfile,
   saveAdmin,
   saveAdminEmail,
   saveAdmins,
@@ -25,11 +26,32 @@ beforeEach(() => {
 });
 
 describe('identity storage', () => {
-  it('seeds defaults and normalizes IDs', () => {
+  it('has organizer defaults but never seeds a default admin', () => {
     expect(getOrganizer()).toMatchObject({ id: DEFAULT_ORGANIZER.id, pass: DEFAULT_ORGANIZER.pass });
-    expect(getAdmins()).toHaveLength(1);
-    expect(getAdmins()[0]).toMatchObject({ id: DEFAULT_ADMIN.id, status: 'Enabled' });
+    expect(getAdmins()).toEqual([]);
+    expect(getAdmin()).toMatchObject({ id: '', pass: '' });
+    expect(DEFAULT_ADMIN).toMatchObject({ id: '', pass: '' });
     expect(normalizeId('  ab\u200Bc  ')).toBe('abc');
+  });
+
+  it('drops the old built-in admin instead of migrating it', () => {
+    localStorage.setItem(STORAGE_KEYS.admin, JSON.stringify({ id: 'admin', pass: 'Admin@124' }));
+    expect(getAdmins()).toEqual([]);
+    expect(readRaw(STORAGE_KEYS.admin)).toBe('');
+  });
+
+  it('removes every local trace of a deleted admin', () => {
+    saveAdmins([
+      { id: 'ADMIN001', pass: 'Password@1', name: 'One' },
+      { id: 'ADMIN002', pass: 'Password@2', name: 'Two' },
+    ]);
+    saveAdmin({ id: 'ADMIN001', pass: 'Password@1', name: 'One' });
+    saveAdminEmail('one@example.com');
+    const remaining = removeAdminProfile('admin001');
+    expect(remaining.map((item) => item.id)).toEqual(['ADMIN002']);
+    expect(getAdmin()).toMatchObject({ id: '', pass: '' });
+    expect(readRaw(STORAGE_KEYS.admin)).toBe('');
+    expect(readRaw(STORAGE_KEYS.adminEmail)).toBe('');
   });
 
   it('migrates the legacy single-admin key into the admin list', () => {

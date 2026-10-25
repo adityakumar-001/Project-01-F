@@ -87,6 +87,7 @@ export default function UnifiedPage() {
     const candidate = getAdmins().find((item) => sameId(item.id, id));
     if (!candidate || candidate.pass !== pass) throw new ApiError('wrong');
     if (candidate.status === 'Disabled') throw new ApiError('disabled');
+    saveAdmin(candidate);
     signIn('adm', candidate.id);
   };
 

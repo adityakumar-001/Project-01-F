@@ -233,7 +233,7 @@ tbody tr:hover{transform:translateY(-1px)}
 // getEmp/setEmp, getRec/setRec = JSON read/write helpers
 // FUTURE: For new data (e.g. leaves/salary), add K_NEW + get/set here
 // ============================================================
-const K_EMP='get_attend_employees', K_REC='get_attend_records', K_ADMIN='get_attend_admin', K_FB='get_attend_fbconfig', K_EMAIL='get_attend_admin_email';
+const K_EMP='get_attend_employees', K_REC='get_attend_records', K_ADMIN='get_attend_admin', K_ADMINS='get_attend_admins', K_FB='get_attend_fbconfig', K_EMAIL='get_attend_admin_email';
 function safeGet(k,fb){try{const v=localStorage.getItem(k);if(v==null)return fb;return JSON.parse(v);}catch(e){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(fb));}catch(e2){return fb;}}}
 function safeSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){try{localStorage.removeItem(k);localStorage.setItem(k,JSON.stringify(v));}catch(e2){alert('⚠️ Storage full! Please clear old photos or records, or clear data after taking a backup.');}}}
 const getEmp=()=>safeGet(K_EMP,[]);
@@ -292,14 +292,23 @@ async function cloudPull(silent){
     if(d&&d.ok){
       if(Array.isArray(d.emp))safeSet(K_EMP,d.emp);
       if(Array.isArray(d.rec))safeSet(K_REC,d.rec);
-      if(d.admin&&d.admin.id){try{localStorage.setItem(K_ADMIN,JSON.stringify(d.admin));}catch(e){}}
+      if(d.admin&&d.admin.id){
+        const cloudAdmin=admNorm(d.admin);
+        try{localStorage.setItem(K_ADMIN,JSON.stringify(cloudAdmin));}catch(e){}
+        // Keep the shared admin list in step with the server profile.
+        try{
+          const list=getAdminsList().filter(function(x){return normId(x.id).toLowerCase()!==normId(cloudAdmin.id).toLowerCase();});
+          safeSet(K_ADMINS,list.concat([cloudAdmin]));
+        }catch(e){}
+      }
       try{renderAdminInfo();}catch(e){}
       try{updateSyncBadge();}catch(e){}
       return true;
     }
-    if(d&&d.error==='session-expired'){
+    if(d&&(d.error==='session-expired'||d.error==='unauthorized')){
+      clearToken();
       clearSession();
-      if(!silent)alert('⏰ Session expired. Please log in again.');
+      if(!silent)alert('⏰ Session expired or this Admin was deleted. Please log in again.');
     }
   }catch(e){if(!silent){alert('❌ Could not fetch data from the cloud: '+e.message+'\nPlease check the API URL and secret.');}}
   return false;
@@ -491,19 +500,56 @@ function updSesLeft(){
 }
 function doAutoLogout(){const s=getSession();const who=(s&&s.role==='adm')?'1 hour':'15 minutes';stopSesTimers();revokeRemoteToken();clearSession();alert('⏰ '+who+' completed — you have been logged out automatically! Please log in again.');location.reload();}
 // ------------------------------------------------------------
-// JS STEP 1: ADMIN AUTH (default + load/save + info display)
-// DEFAULT_ADMIN = first-time login (admin / Admin@124)
+// JS STEP 1: ADMIN AUTH (organizer-created accounts only)
+// The old built-in admin/Admin@124 account is retired. The organizer creates
+// every admin ID, so login checks the shared get_attend_admins list.
 // + 4 recovery answers: mob(Q1) + movie(Q2) + birth(Q3) + school(Q4)
-// getAdmin() = load + old admin001 migration + missing-field fallback
+// getAdmin() = load current profile + old admin001 migration
 // setAdmin() = save + refresh UI via renderAdminInfo()
 // renderAdminInfo() = shows the current admin in header/login/change-card
 // updateAdminCreds() = updates ID+Mobile+Password+3 answers from the Change Admin card
-// FUTURE: To add admin roles/permissions, extend the fields in this same object
-// FUTURE: To add a 5th question, add the field in DEFAULT/get/set/render/update/reset
 // ------------------------------------------------------------
-const DEFAULT_ADMIN={id:'admin',pass:'Admin@124',mob:'',movie:'',birth:'',school:''};
-// STEP 1A: Admin load (falls back to '' when new fields are missing in old saved data)
-function getAdmin(){try{const a=JSON.parse(localStorage.getItem(K_ADMIN)||'null');if(a&&a.id&&a.pass){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';if(a.id==='admin001'){a.id='admin';localStorage.setItem(K_ADMIN,JSON.stringify(a));}return a;}}catch(e){}return {...DEFAULT_ADMIN};}
+const LEGACY_DEFAULT_ADMIN_ID='admin', LEGACY_DEFAULT_ADMIN_PASS='Admin@124';
+function admNorm(a){
+  a=a||{};
+  return {id:String(a.id||''),pass:String(a.pass||''),mob:String(a.mob||''),movie:String(a.movie||''),birth:String(a.birth||''),school:String(a.school||''),photo:String(a.photo||''),name:String(a.name||''),company:String(a.company||''),status:(a.status==='Disabled'?'Disabled':'Enabled'),created:String(a.created||'')};
+}
+// The organizer's list is the source of truth. An existing key wins even when
+// empty, so the last deleted admin stays deleted.
+function getAdminsList(){
+  try{
+    const arr=safeGet(K_ADMINS,null);
+    if(Array.isArray(arr))return arr.map(admNorm);
+  }catch(e){}
+  // One-time migration from the old single-admin key. Never migrate the
+  // retired admin/Admin@124 account back into existence.
+  try{
+    const one=JSON.parse(localStorage.getItem(K_ADMIN)||'null');
+    if(one&&one.id){
+      const legacyPass=String(one.pass||'');
+      const legacyDefault=normId(one.id).toLowerCase()===LEGACY_DEFAULT_ADMIN_ID&&(legacyPass===''||legacyPass===LEGACY_DEFAULT_ADMIN_PASS);
+      if(!legacyDefault){
+        const migrated=[admNorm(Object.assign({},one,{status:one.status||'Enabled'}))];
+        safeSet(K_ADMINS,migrated);
+        return migrated;
+      }
+      localStorage.removeItem(K_ADMIN);
+    }
+  }catch(e){}
+  return [];
+}
+// STEP 1A: Admin load (accepts cloud profiles whose password was scrubbed)
+function getAdmin(){
+  try{
+    const a=JSON.parse(localStorage.getItem(K_ADMIN)||'null');
+    if(a&&a.id){
+      if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';
+      if(a.id==='admin001'){a.id='admin';localStorage.setItem(K_ADMIN,JSON.stringify(a));}
+      return admNorm(a);
+    }
+  }catch(e){}
+  return admNorm({});
+}
 // STEP 1B: Admin save (preserving all 4 answers is mandatory)
 function setAdmin(a){if(!a.mob)a.mob='';if(!a.movie)a.movie='';if(!a.birth)a.birth='';if(!a.school)a.school='';try{localStorage.setItem(K_ADMIN,JSON.stringify(a));}catch(e){}renderAdminInfo();try{queueCloudPush();}catch(e){}}
 // STEP 1C: Admin info UI refresh (current ID/mobile/security-status + form autofill)
@@ -558,11 +604,11 @@ async function updateAdminCreds(){
      if(err==='password-too-short')return alert('❌ New password must be at least 8 characters');
      return alert('❌ Admin update failed ('+err+').');
    }
-   setAdmin({id:d.admin.id,name:d.admin.name||'',pass:'',mob:d.admin.mob||'',movie:d.admin.movie||'',birth:d.admin.birth||'',school:d.admin.school||''});
+   setAdmin({id:d.admin.id,name:d.admin.name||'',company:d.admin.company||ad.company||'',pass:'',mob:d.admin.mob||'',movie:d.admin.movie||'',birth:d.admin.birth||'',school:d.admin.school||''});
    const s=getSession();if(s&&s.role==='adm'){s.adminId=d.admin.id;saveSession(s);}
  } else {
    if(curP!==ad.pass) return alert('❌ Wrong current password!');
-   setAdmin({id:newId,pass:newP,mob:newMob,movie:newMovie,birth:newBirth,school:newSchool});
+   setAdmin({id:newId,pass:newP,name:ad.name||'',company:ad.company||'',mob:newMob,movie:newMovie,birth:newBirth,school:newSchool});
  }
  document.getElementById('cAdmCurPass').value='';
  document.getElementById('cAdmNewPass').value='';
@@ -599,7 +645,7 @@ async function resetAdminPassword(){
   if(!id||!mob||!movie||!birth||!school||!np||!cp) return alert('Please fill all fields — all four questions (Q1-Q4) are compulsory');
   if(np!==cp) return alert('❌ New password and confirm password do not match!');
   if(np.length<8) return alert('❌ Password must be at least 8 characters');
-  const ad=getAdmin();
+  const ad=getAdminsList().find(function(a){return normId(a.id).toLowerCase()===normId(id).toLowerCase();})||getAdmin();
   if(isCloudMode()){
     let d=null;
     try{d=await apiFetch('/api/admin/forgot',{method:'POST',body:JSON.stringify({id,mob,movie,birth,school,newPass:np})});}
@@ -609,7 +655,7 @@ async function resetAdminPassword(){
       if((d&&d.error)==='password-too-short')return alert('❌ Password must be at least 8 characters');
       return alert('❌ Password reset failed ('+((d&&d.error)||'unknown')+').');
     }
-    setAdmin({id:ad.id,pass:'',mob:ad.mob||mob,movie:ad.movie||movie,birth:ad.birth||birth,school:ad.school||school});
+    setAdmin({id:normId(id),pass:'',mob:ad.mob||mob,movie:ad.movie||movie,birth:ad.birth||birth,school:ad.school||school,name:ad.name||'',company:ad.company||''});
     closeForgotModal();
     alert('✅ Password reset successful! (4/4 answers correct)\nPlease log in with the new password.');
     return;
@@ -625,7 +671,13 @@ async function resetAdminPassword(){
   if(birth.toLowerCase()!==String(ad.birth).toLowerCase()) return alert('❌ Q3 Wrong: Birth place did not match!');
   // STEP 2B-vi: Q4 verify (school, CAPS ignore)
   if(school.toLowerCase()!==String(ad.school).toLowerCase()) return alert('❌ Q4 Wrong: Class 10th school name did not match!');
-  setAdmin({id:ad.id,pass:np,mob:ad.mob,movie:ad.movie,birth:ad.birth,school:ad.school});
+  try{
+    const list=getAdminsList().map(function(x){
+      return normId(x.id).toLowerCase()===normId(ad.id).toLowerCase()?Object.assign({},x,{pass:np,mob:ad.mob,movie:ad.movie,birth:ad.birth,school:ad.school}):x;
+    });
+    safeSet(K_ADMINS,list);
+  }catch(e){}
+  setAdmin({id:ad.id,pass:np,mob:ad.mob,movie:ad.movie,birth:ad.birth,school:ad.school,name:ad.name||'',company:ad.company||''});
   closeForgotModal();
   alert('✅ Password reset successful! (4/4 answers correct)\nPlease log in with the new password.');
 }
@@ -815,28 +867,23 @@ function resetAdmSteps(){
   const h=document.getElementById('humanChk');if(h)h.checked=false;
   refreshCaptcha();
 }
-// SINGLE-ADMIN RULE: Only one Admin ID is used per device here. Once a custom admin is saved, the default (admin/Admin@124) is blocked.
-// On a fresh device (no custom save), the default works. After a backup import, the restored admin works.
-function hasCustomAdmin(){try{const raw=localStorage.getItem(K_ADMIN);if(!raw)return false;const a=JSON.parse(raw);return !!(a&&a.id&&a.pass);}catch(e){return false;}}
+// Every admin comes from the organizer's list. In cloud mode the server is the
+// authority; offline mode checks the local list (including the enabled flag).
 function admMatchId(id){
-  const nid=normId(id).toLowerCase();
+  const nid=normId(id);
   if(!nid)return '';
-  if(hasCustomAdmin()){
-    try{const ad=getAdmin();if(nid===normId(ad.id).toLowerCase())return ad.id;}catch(e){}
-    return '';
-  }
-  try{if(nid===normId(DEFAULT_ADMIN.id).toLowerCase())return DEFAULT_ADMIN.id;}catch(e){}
-  return '';
+  if(isCloudMode())return nid;
+  const found=getAdminsList().find(function(a){return normId(a.id).toLowerCase()===nid.toLowerCase()&&a.status!=='Disabled';});
+  return found?found.id:'';
 }
 function admMatchPass(id,pass){
   const p=String(pass||'').trim();
   const nid=normId(id).toLowerCase();
-  if(hasCustomAdmin()){
-    try{const ad=getAdmin();if(nid===normId(ad.id).toLowerCase()&&p===ad.pass)return ad;}catch(e){}
-    return null;
-  }
-  try{if(nid===normId(DEFAULT_ADMIN.id).toLowerCase()&&p===DEFAULT_ADMIN.pass)return {...DEFAULT_ADMIN};}catch(e){}
-  return null;
+  if(!nid)return null;
+  const found=getAdminsList().find(function(a){
+    return normId(a.id).toLowerCase()===nid&&a.status!=='Disabled'&&String(a.pass)===p;
+  });
+  return found?Object.assign({},found):null;
 }
 function refreshCaptcha(){
   const a=Math.floor(Math.random()*9)+1, b=Math.floor(Math.random()*9)+1;
@@ -946,7 +993,7 @@ async function firstLoginChange(){
   alert('✅ New password set! You can now mark attendance.');
 }
 // STEP 5D: Step-3 Password login (multi-device + refresh-safe: admId input se recover)
-function adminLogin(){
+async function adminLogin(){
 admStepLoad();
 // Refresh ke baad admIdOk khali ho to input se wapas lao (HP laptop refresh case)
 if(!admIdOk){
@@ -958,8 +1005,34 @@ if(!admIdOk) return alert('❌ Please verify Admin ID in Step 1 first!');
 if(!admHumanOk) return alert('❌ Please complete Step 2 verification first!');
 const p=String(document.getElementById('admPass').value||'').trim();
 if(!p) return alert('Please enter Admin Password');
+if(isCloudMode()){
+  let d=null;
+  try{d=await apiFetch('/api/admin/login',{method:'POST',body:JSON.stringify({id:admIdOk,pass:p})});}
+  catch(e){return alert('❌ Cloud login failed: '+e.message);}
+  if(!(d&&d.ok)){
+    const err=(d&&d.error)||'wrong';
+    if(err==='disabled')return alert('This Admin ID has been disabled by the Organizer. Login is blocked.');
+    if(err==='too-many-attempts')return alert('Too many login attempts. Please wait a few minutes and try again.');
+    return alert('❌ Wrong Admin ID or Password!');
+  }
+  setToken(d.token);
+  const cloudAdmin=admNorm(Object.assign({},d.admin,{pass:''}));
+  try{localStorage.setItem(K_ADMIN,JSON.stringify(cloudAdmin));}catch(e){}
+  try{
+    const list=getAdminsList().filter(function(x){return normId(x.id).toLowerCase()!==normId(cloudAdmin.id).toLowerCase();});
+    safeSet(K_ADMINS,list.concat([cloudAdmin]));
+  }catch(e){}
+  saveSession({role:'adm',adminId:cloudAdmin.id,loginAt:Date.now()});
+  try{await cloudPull(true);}catch(e){}
+  admStepClear();showDash('adm');startSesTimers();
+  return;
+}
 const ad=admMatchPass(admIdOk,p);
-if(ad){admStepClear();saveSession({role:'adm',loginAt:Date.now()});showDash('adm');startSesTimers();}
+if(ad){
+  try{localStorage.setItem(K_ADMIN,JSON.stringify(ad));}catch(e){}
+  saveSession({role:'adm',adminId:ad.id,loginAt:Date.now()});
+  admStepClear();showDash('adm');startSesTimers();
+}
 else alert('❌ Wrong Admin Password!');}
 function showDash(w){
 document.getElementById('loginSection').classList.add('hidden');
@@ -1074,6 +1147,17 @@ function tryRestoreSession(){
       curEmp=f;showDash('emp');startSesTimers();
       if(needsPassChange(f)){openFirstLoginModal();}
     } else if(s.role==='adm'){
+      if(isCloudMode()&&!getToken()){clearSession();return;}
+      // Old sessions without an adminId cannot be trusted to a specific
+      // account anymore, so they must sign in again.
+      const wanted=normId(s.adminId);
+      if(!wanted){clearSession();return;}
+      // A deleted or disabled admin must not restore a working dashboard.
+      const local=getAdminsList().find(function(a){
+        return normId(a.id).toLowerCase()===wanted.toLowerCase()&&a.status!=='Disabled';
+      });
+      if(!local){clearSession();clearToken();return;}
+      try{localStorage.setItem(K_ADMIN,JSON.stringify(local));}catch(e){}
       showDash('adm');startSesTimers();
     }
   }catch(e){}
@@ -1707,6 +1791,25 @@ showEmptyDeviceNote();
 try{checkStorageWarn();}catch(e){}
 // Log device for debugging (Android/iOS/PC sab me visible in console)
 try{console.log('[Get-Attended] UA:', navigator.userAgent, '| touch:', ('ontouchstart' in window), '| storage:', storageAvailable());}catch(e){}
+// If the organizer deletes/disables this admin in another tab, drop the local
+// session immediately instead of keeping a working dashboard.
+window.addEventListener('storage',function(e){
+  if(e.key&&e.key!==K_ADMINS&&e.key!==K_ADMIN&&e.key!=='get_attend_session')return;
+  try{
+    const s=getSession();
+    if(!s||s.role!=='adm')return;
+    const wanted=normId(s.adminId||getAdmin().id);
+    if(!wanted)return;
+    const alive=getAdminsList().some(function(a){
+      return normId(a.id).toLowerCase()===wanted.toLowerCase()&&a.status!=='Disabled';
+    });
+    if(!alive){
+      clearSession();clearToken();
+      alert('Your Admin account was deleted or disabled by the Organizer. Please contact the Organizer.');
+      location.reload();
+    }
+  }catch(e){}
+});
 cloudPullOnStart().then(()=>{tryRestoreSession();}).catch(()=>{tryRestoreSession();});
 </script>
 
